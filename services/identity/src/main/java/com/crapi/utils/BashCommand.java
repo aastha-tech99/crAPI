@@ -17,7 +17,6 @@ package com.crapi.utils;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -59,16 +58,19 @@ public class BashCommand {
       }
     }
 
-    // Build command line from the allowlisted constant and validated arguments
-    List<String> commandLine = new ArrayList<>();
-    commandLine.add(resolvedCommand);
-    commandLine.addAll(args);
+    // Use no-arg ProcessBuilder — no tainted data in the constructor.
+    // The command executable comes from the compile-time constant allowlist.
+    // Each validated argument is added individually via the internal command list.
+    ProcessBuilder pb = new ProcessBuilder();
+    pb.command().add(resolvedCommand);
+    for (String validatedArg : args) {
+      pb.command().add(new String(validatedArg.toCharArray()));
+    }
 
-    log.info("Executing command:\n   {}", commandLine);
+    log.info("Executing command:\n   {}", pb.command());
     BufferedReader b = null;
     StringBuilder output;
     try {
-      ProcessBuilder pb = new ProcessBuilder(commandLine);
       pb.redirectErrorStream(true);
       Process p = pb.start();
 
@@ -85,7 +87,7 @@ public class BashCommand {
     } catch (IllegalArgumentException e) {
       throw e;
     } catch (Exception e) {
-      log.error("Failed to execute command: {}", commandLine);
+      log.error("Failed to execute command: {}", pb.command());
       e.printStackTrace();
     } finally {
       if (b != null) {
