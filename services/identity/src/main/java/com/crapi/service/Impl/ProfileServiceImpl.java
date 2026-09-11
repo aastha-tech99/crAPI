@@ -241,12 +241,12 @@ public class ProfileServiceImpl implements ProfileService {
               && optionalProfileVideo.get().getConversion_params() != null) {
             profileVideo = optionalProfileVideo.get();
             List<String> commandArgs = new ArrayList<>();
-            commandArgs.add("convertVideo");
             commandArgs.add("-i");
             commandArgs.add(profileVideo.getVideo_name());
             commandArgs.addAll(
                 Arrays.asList(profileVideo.getConversion_params().trim().split("\\s+")));
-            return new CRAPIResponse(conversionShell.executeBashCommand(commandArgs), 200);
+            return new CRAPIResponse(
+                conversionShell.executeAllowedCommand("convertVideo", commandArgs), 200);
           }
           return new CRAPIResponse(UserMessage.CONVERT_VIDEO_INTERNAL_ERROR, 500);
         }

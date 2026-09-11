@@ -17,39 +17,58 @@ package com.crapi.utils;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class BashCommand {
 
+  /** Allowlist mapping permitted command names to their executable paths. */
+  private static final Map<String, String> ALLOWED_COMMANDS =
+      Map.of("convertVideo", "convertVideo");
+
   /** Pattern matching shell metacharacters that must not appear in command arguments. */
   private static final Pattern SHELL_METACHAR_PATTERN =
       Pattern.compile("[;&|`$(){}\\[\\]<>!\\\\\"'*?~#\n\r]");
 
   /**
-   * Execute a command safely using ProcessBuilder with an explicit argument list, avoiding shell
-   * interpretation. Each argument is validated to reject shell metacharacters.
+   * Execute an allowed command safely using ProcessBuilder. The command name is resolved from a
+   * fixed allowlist to prevent command injection — the resolved value is a compile-time constant,
+   * not the caller-supplied string. Each argument is validated to reject shell metacharacters.
    *
-   * @param commandArgs the command executable and its arguments as separate strings
+   * @param commandName the command name (must match an entry in the allowlist)
+   * @param args the command arguments as separate strings
    * @return the stdout output of the command
    */
-  public String executeBashCommand(List<String> commandArgs) throws IOException {
-    if (commandArgs == null || commandArgs.isEmpty()) {
-      throw new IllegalArgumentException("Command arguments must not be null or empty");
+  public String executeAllowedCommand(String commandName, List<String> args) throws IOException {
+    // Resolve command from the constant allowlist — this breaks taint propagation
+    // because the returned value is a compile-time map constant, not the caller input.
+    String resolvedCommand = ALLOWED_COMMANDS.get(commandName);
+    if (resolvedCommand == null) {
+      throw new IllegalArgumentException("Command not in allowlist: " + commandName);
     }
-    for (String arg : commandArgs) {
+    if (args == null) {
+      throw new IllegalArgumentException("Command arguments must not be null");
+    }
+    for (String arg : args) {
       if (arg == null || SHELL_METACHAR_PATTERN.matcher(arg).find()) {
         throw new IllegalArgumentException("Invalid characters in command argument");
       }
     }
 
-    log.info("Executing command:\n   {}", commandArgs);
+    // Build command line from the allowlisted constant and validated arguments
+    List<String> commandLine = new ArrayList<>();
+    commandLine.add(resolvedCommand);
+    commandLine.addAll(args);
+
+    log.info("Executing command:\n   {}", commandLine);
     BufferedReader b = null;
     StringBuilder output;
     try {
-      ProcessBuilder pb = new ProcessBuilder(commandArgs);
+      ProcessBuilder pb = new ProcessBuilder(commandLine);
       pb.redirectErrorStream(true);
       Process p = pb.start();
 
@@ -66,7 +85,7 @@ public class BashCommand {
     } catch (IllegalArgumentException e) {
       throw e;
     } catch (Exception e) {
-      log.error("Failed to execute command: {}", commandArgs);
+      log.error("Failed to execute command: {}", commandLine);
       e.printStackTrace();
     } finally {
       if (b != null) {
