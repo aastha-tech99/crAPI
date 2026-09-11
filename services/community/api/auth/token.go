@@ -17,6 +17,7 @@ package auth
 import (
 	"bytes"
 	"crypto/rsa"
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -60,7 +61,14 @@ func fetchJWKSPublicKey() (*rsa.PublicKey, error) {
 	}
 	jwksURL := fmt.Sprintf("%s://%s/identity/api/auth/jwks.json", scheme, identityService)
 
-	resp, err := http.Get(jwksURL)
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				MinVersion: tls.VersionTLS12,
+			},
+		},
+	}
+	resp, err := client.Get(jwksURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch JWKS: %w", err)
 	}
@@ -125,7 +133,14 @@ func ExtractTokenID(r *http.Request, db *gorm.DB) (uint32, error) {
 		return 0, err
 	}
 
-	resp, err := http.Post(tokenVerifyURL, "application/json", bytes.NewBuffer(tokenJSON))
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				MinVersion: tls.VersionTLS12,
+			},
+		},
+	}
+	resp, err := client.Post(tokenVerifyURL, "application/json", bytes.NewBuffer(tokenJSON))
 	if err != nil {
 		log.Println(err)
 		return 0, err
