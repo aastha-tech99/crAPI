@@ -16,8 +16,6 @@ package responses
 
 import (
 	"encoding/json"
-	"html"
-	"io"
 	"log"
 	"net/http"
 )
@@ -27,8 +25,13 @@ func JSON(w http.ResponseWriter, statusCode int, data interface{}) {
 	w.WriteHeader(statusCode)
 	err := json.NewEncoder(w).Encode(data)
 	if err != nil {
-		if _, writeErr := io.WriteString(w, html.EscapeString(err.Error())); writeErr != nil {
-			log.Println("Error writing error response:", writeErr)
+		encErr := json.NewEncoder(w).Encode(struct {
+			Error string `json:"error"`
+		}{
+			Error: err.Error(),
+		})
+		if encErr != nil {
+			log.Println("Error writing error response:", encErr)
 		}
 	}
 }
