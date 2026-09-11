@@ -1,12 +1,13 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/binary"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"hash/fnv"
 	"log"
-	"math/rand"
 	"net/http"
 	"strings"
 	"time"
@@ -58,6 +59,18 @@ type PaymentInfoResponse struct {
 	Currency      string  `json:"currency"`
 }
 
+// cryptoSource implements the math/rand.Source interface using crypto/rand
+// for cryptographically secure random number generation.
+type cryptoSource struct{}
+
+func (s cryptoSource) Int63() int64 {
+	var b [8]byte
+	rand.Read(b[:])
+	return int64(binary.BigEndian.Uint64(b[:]) & ^uint64(1 << 63))
+}
+
+func (s cryptoSource) Seed(_ int64) {}
+
 func HelloServer(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.Write([]byte("crAPI Gateway.\n"))
@@ -81,7 +94,7 @@ func GetOwners(w http.ResponseWriter, r *http.Request) {
 	h := fnv.New32a()
 	h.Write([]byte(vin))
 	seed := int64(h.Sum32())
-	src := rand.NewSource(seed)
+	src := cryptoSource{}
 	fake := faker.NewWithSeed(src)
 	fmt.Printf("Vehicle: %+v : Seed %d\n", vin, seed)
 	w.Header().Set("Content-Type", "application/json")
@@ -124,10 +137,7 @@ func GetPayMentInfo(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Bad Request. Invalid Body %s\n", err.Error())
 		return
 	}
-	h := fnv.New32a()
-	h.Write([]byte(p_req.User.Phone))
-	seed := int64(h.Sum32())
-	src := rand.NewSource(seed)
+	src := cryptoSource{}
 	fake := faker.NewWithSeed(src)
 	payment_res := PaymentInfoResponse{}
 	payment_res.TransactionId = p_req.Order.TransactionId
