@@ -64,20 +64,20 @@ def _build_llm(api_key, model_name):
 
     if provider == "openai":
         kwargs = {"api_key": api_key, "model": model_name}
-        key_present = bool(api_key)
+        auth_configured = bool(api_key)
         if Config.OPENAI_BASE_URL:
             kwargs["base_url"] = Config.OPENAI_BASE_URL
             logger.info(
-                "OpenAI Config - model: %s, base_url: %s, has_api_key: %s",
+                "OpenAI Config - model: %s, base_url: %s, auth_configured: %s",
                 model_name,
                 Config.OPENAI_BASE_URL,
-                key_present,
+                auth_configured,
             )
         else:
             logger.info(
-                "OpenAI Config - model: %s, base_url: (default), has_api_key: %s",
+                "OpenAI Config - model: %s, base_url: (default), auth_configured: %s",
                 model_name,
-                key_present,
+                auth_configured,
             )
         return ChatOpenAI(**kwargs)
     if provider == "azure_openai":
@@ -119,7 +119,7 @@ def _build_llm(api_key, model_name):
                 bool(bedrock_kwargs.get("aws_access_key_id")),
             )
         except Exception as e:
-            logger.error("[BUILD_LLM] Failed to get Bedrock credentials: %s", type(e).__name__)
+            logger.error("[BUILD_LLM] Failed to get Bedrock auth config: %s", type(e).__name__)
             raise
 
         try:
@@ -148,33 +148,33 @@ def _build_llm(api_key, model_name):
             location=Config.VERTEX_LOCATION or None,
         )
     if provider == "anthropic":
-        key_present = bool(api_key)
+        auth_configured = bool(api_key)
         logger.info(
-            "Anthropic Config - model: %s, has_api_key: %s", model_name, key_present
+            "Anthropic Config - model: %s, auth_configured: %s", model_name, auth_configured
         )
         return ChatAnthropic(api_key=api_key, model=model_name)
     if provider == "groq":
-        groq_key_present = bool(Config.GROQ_API_KEY)
+        groq_configured = bool(Config.GROQ_API_KEY)
         logger.info(
-            "Groq Config - model: %s, has_api_key: %s",
+            "Groq Config - model: %s, auth_configured: %s",
             model_name,
-            groq_key_present,
+            groq_configured,
         )
         return ChatGroq(api_key=Config.GROQ_API_KEY, model=model_name)
     if provider == "mistral":
-        mistral_key_present = bool(Config.MISTRAL_API_KEY)
+        mistral_configured = bool(Config.MISTRAL_API_KEY)
         logger.info(
-            "Mistral Config - model: %s, has_api_key: %s",
+            "Mistral Config - model: %s, auth_configured: %s",
             model_name,
-            mistral_key_present,
+            mistral_configured,
         )
         return ChatMistralAI(api_key=Config.MISTRAL_API_KEY, model=model_name)
     if provider == "cohere":
-        cohere_key_present = bool(Config.COHERE_API_KEY)
+        cohere_configured = bool(Config.COHERE_API_KEY)
         logger.info(
-            "Cohere Config - model: %s, has_api_key: %s",
+            "Cohere Config - model: %s, auth_configured: %s",
             model_name,
-            cohere_key_present,
+            cohere_configured,
         )
         return ChatCohere(api_key=Config.COHERE_API_KEY, model=model_name)
     logger.error("Unsupported LLM provider: %s", provider)
@@ -182,13 +182,13 @@ def _build_llm(api_key, model_name):
 
 
 async def build_langgraph_agent(api_key, model_name, user_jwt):
-    key_present = bool(api_key)
-    auth_present = bool(user_jwt)
+    auth_configured = bool(api_key)
+    identity_provided = bool(user_jwt)
     logger.info(
-        "Building LangGraph agent - has_api_key: %s, model_name: %s, has_user_jwt: %s",
-        key_present,
+        "Building LangGraph agent - auth_configured: %s, model_name: %s, identity_provided: %s",
+        auth_configured,
         model_name or "(will use default)",
-        auth_present,
+        identity_provided,
     )
     system_prompt = textwrap.dedent(
         """

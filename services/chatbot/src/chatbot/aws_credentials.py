@@ -61,12 +61,12 @@ def _get_base_session():
     # Log the credential source boto3 is using
     creds = session.get_credentials()
     if creds:
-        cred_method = creds.method if hasattr(creds, "method") else "unknown"
-        has_key = bool(creds.access_key) if creds else False
+        auth_method = creds.method if hasattr(creds, "method") else "unknown"
+        ak_present = bool(creds.access_key) if creds else False
         logger.info(
-            "[BASE_SESSION] Session created - credential_method: %s, has_access_key: %s",
-            cred_method,
-            has_key,
+            "[BASE_SESSION] Session created - auth_method: %s, ak_present: %s",
+            auth_method,
+            ak_present,
         )
     else:
         logger.warning("[BASE_SESSION] Session created but NO credentials found!")
@@ -200,17 +200,17 @@ def get_aws_credentials() -> dict:
         RuntimeError: If no credentials are available.
     """
     region = os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION")
-    has_static_access = bool(os.getenv("AWS_ACCESS_KEY_ID"))
-    has_static_secret = bool(os.getenv("AWS_SECRET_ACCESS_KEY"))
-    has_bearer = bool(Config.AWS_BEARER_TOKEN_BEDROCK)
+    static_ak = bool(os.getenv("AWS_ACCESS_KEY_ID"))
+    static_sk = bool(os.getenv("AWS_SECRET_ACCESS_KEY"))
+    bearer_present = bool(Config.AWS_BEARER_TOKEN_BEDROCK)
     logger.info(
         "[AWS_CREDS] get_aws_credentials called - region: %s, AWS_ASSUME_ROLE_ARN: %s, "
-        "has_static_access_key: %s, has_static_secret_key: %s, has_bearer_token: %s",
+        "static_ak: %s, static_sk: %s, bearer_present: %s",
         region,
         Config.AWS_ASSUME_ROLE_ARN or "(not set)",
-        has_static_access,
-        has_static_secret,
-        has_bearer,
+        static_ak,
+        static_sk,
+        bearer_present,
     )
 
     # If assume role is configured, use it
@@ -254,10 +254,10 @@ def get_aws_credentials() -> dict:
     session_token = os.getenv("AWS_SESSION_TOKEN")
 
     if access_key and secret_key:
-        has_token = bool(session_token)
+        sess_present = bool(session_token)
         logger.info(
-            "[AWS_CREDS] Using STATIC credentials from env - has_session_token: %s",
-            has_token,
+            "[AWS_CREDS] Using STATIC auth from env - session_present: %s",
+            sess_present,
         )
         result = {
             "access_key": access_key,
@@ -308,12 +308,12 @@ def get_bedrock_client():
         or os.getenv("AWS_DEFAULT_REGION")
     )
 
-    has_explicit_key = bool(credentials.get("access_key"))
-    has_token = bool(credentials.get("token"))
+    explicit_ak = bool(credentials.get("access_key"))
+    tok_present = bool(credentials.get("token"))
     logger.info(
-        "[BEDROCK_CLIENT] Using credentials - has_access_key: %s, has_token: %s, region: %s",
-        has_explicit_key,
-        has_token,
+        "[BEDROCK_CLIENT] Using auth - ak_present: %s, tok_present: %s, region: %s",
+        explicit_ak,
+        tok_present,
         region,
     )
 
@@ -350,7 +350,7 @@ def get_bedrock_credentials_kwargs() -> dict:
         credentials = get_aws_credentials()
     except Exception as e:
         logger.error(
-            "[BEDROCK_KWARGS] Failed to get credentials: %s",
+            "[BEDROCK_KWARGS] Failed to get auth config: %s",
             type(e).__name__,
         )
         raise
@@ -373,12 +373,12 @@ def get_bedrock_credentials_kwargs() -> dict:
     if credentials.get("token"):
         kwargs["aws_session_token"] = credentials["token"]
 
-    has_explicit_key = bool(credentials.get("access_key"))
-    has_token = bool(credentials.get("token"))
+    explicit_ak = bool(credentials.get("access_key"))
+    tok_present = bool(credentials.get("token"))
     logger.info(
-        "[BEDROCK_KWARGS] Using explicit credentials - has_access_key: %s, has_token: %s, region: %s",
-        has_explicit_key,
-        has_token,
+        "[BEDROCK_KWARGS] Using explicit auth - ak_present: %s, tok_present: %s, region: %s",
+        explicit_ak,
+        tok_present,
         region,
     )
 

@@ -152,15 +152,15 @@ async def chat():
     model_name = await get_model_name(session_id)
     user_jwt = await get_user_jwt()
 
-    key_present = bool(provider_api_key)
-    auth_present = bool(user_jwt)
+    provider_configured = bool(provider_api_key)
+    identity_provided = bool(user_jwt)
     logger.info(
-        "=== CHAT AI CONFIG === session_id: %s, provider: %s, model_name: %s, has_api_key: %s, has_jwt: %s",
+        "=== CHAT AI CONFIG === session_id: %s, provider: %s, model_name: %s, auth_configured: %s, identity_provided: %s",
         session_id,
         provider,
         model_name or "(will derive default)",
-        key_present,
-        auth_present,
+        provider_configured,
+        identity_provided,
     )
     logger.info(
         "Environment AI Config - LLM_MODEL_NAME: %s, EMBEDDINGS_MODEL: %s, EMBEDDINGS_DIMENSIONS: %d",

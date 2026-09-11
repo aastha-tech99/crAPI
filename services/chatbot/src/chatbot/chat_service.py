@@ -29,15 +29,15 @@ async def delete_chat_history(session_id):
 
 
 async def process_user_message(session_id, user_message, api_key, model_name, user_jwt):
-    key_present = bool(api_key)
-    auth_present = bool(user_jwt)
+    provider_configured = bool(api_key)
+    identity_provided = bool(user_jwt)
     logger.info(
-        "Processing user message - session_id: %s, model_name: %s, provider: %s, has_api_key: %s, has_jwt: %s",
+        "Processing user message - session_id: %s, model_name: %s, provider: %s, auth_configured: %s, identity_provided: %s",
         session_id,
         model_name or "(default)",
         Config.LLM_PROVIDER,
-        key_present,
-        auth_present,
+        provider_configured,
+        identity_provided,
     )
     logger.info(
         "=== AI CONFIG === provider: %s, model: %s, embeddings_model: %s",
