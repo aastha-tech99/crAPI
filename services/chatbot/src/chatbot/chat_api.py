@@ -1,6 +1,6 @@
 import logging
 import os
-import random
+import secrets
 from uuid import uuid4
 
 from quart import Blueprint, jsonify, request
@@ -211,7 +211,7 @@ async def chat():
             "The AI model is temporarily at capacity. Please try your question again soon.",
             "Processing is taking longer than expected due to demand. Please try again in a bit.",
         ]
-        return jsonify({"id": id, "message": random.choice(_busy_responses)}), 200
+        return jsonify({"id": id, "message": secrets.choice(_busy_responses)}), 200
 
     try:
         reply, response_id = await process_user_message(
