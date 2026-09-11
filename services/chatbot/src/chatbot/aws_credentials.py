@@ -203,15 +203,7 @@ def get_aws_credentials() -> dict:
     static_ak = bool(os.getenv("AWS_ACCESS_KEY_ID"))
     static_sk = bool(os.getenv("AWS_SECRET_ACCESS_KEY"))
     bearer_present = bool(Config.AWS_BEARER_TOKEN_BEDROCK)
-    logger.info(
-        "[AWS_CREDS] get_aws_credentials called - region: %s, AWS_ASSUME_ROLE_ARN: %s, "
-        "static_ak: %s, static_sk: %s, bearer_present: %s",
-        region,
-        Config.AWS_ASSUME_ROLE_ARN or "(not set)",
-        static_ak,
-        static_sk,
-        bearer_present,
-    )
+    logger.info("[AWS_CREDS] get_aws_credentials called - region: %s", region)
 
     # If assume role is configured, use it
     if Config.AWS_ASSUME_ROLE_ARN:
