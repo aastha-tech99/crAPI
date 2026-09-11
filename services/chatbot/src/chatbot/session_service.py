@@ -48,21 +48,21 @@ async def get_api_key(session_id):
     key_field = _get_api_key_field(provider)
     if provider == "openai" and Config.OPENAI_API_KEY:
         logger.debug(
-            "API key source - session_id: %s, provider: %s, source: environment",
+            "Auth source - session_id: %s, provider: %s, source: environment",
             session_id,
             provider,
         )
         return Config.OPENAI_API_KEY
     if provider == "anthropic" and Config.ANTHROPIC_API_KEY:
         logger.debug(
-            "API key source - session_id: %s, provider: %s, source: environment",
+            "Auth source - session_id: %s, provider: %s, source: environment",
             session_id,
             provider,
         )
         return Config.ANTHROPIC_API_KEY
     if not key_field:
         logger.debug(
-            "API key not required for provider - session_id: %s, provider: %s",
+            "Auth not required for provider - session_id: %s, provider: %s",
             session_id,
             provider,
         )
@@ -77,13 +77,13 @@ async def get_api_key(session_id):
         return None
     if key_field not in doc:
         logger.debug(
-            "API key not found in session - session_id: %s, provider: %s",
+            "Auth not found in session - session_id: %s, provider: %s",
             session_id,
             provider,
         )
         return None
     logger.debug(
-        "API key source - session_id: %s, provider: %s, source: session_stored",
+        "Auth source - session_id: %s, provider: %s, source: session_stored",
         session_id,
         provider,
     )
