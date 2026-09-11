@@ -28,7 +28,11 @@ COPY --from=builder /app/server /app/server
 COPY --from=builder /app/public.crt /app/server.crt
 COPY --from=builder /app/private.key /app/server.key
 
+RUN groupadd --system appgroup && useradd --system --gid appgroup --no-create-home appuser
+RUN chown -R appuser:appgroup /app
+
 EXPOSE 443
 
+USER appuser
 CMD ["/app/server"]
 

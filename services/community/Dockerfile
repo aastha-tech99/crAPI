@@ -39,8 +39,12 @@ COPY certs /app/certs
 COPY health.sh /app/health.sh
 RUN ls -al /app
 
+RUN addgroup -S appgroup && adduser -S -G appgroup appuser
+RUN chown -R appuser:appgroup /app
+
 ARG SERVER_PORT
 EXPOSE ${SERVER_PORT}
 # Expose profiling port
 EXPOSE 6060
+USER appuser
 CMD /app/main
