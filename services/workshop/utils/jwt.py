@@ -25,6 +25,16 @@ import logging
 
 logger = logging.getLogger()
 
+_jwks_client = None
+
+
+def _get_jwks_client():
+    """Return a cached PyJWKClient for the identity service JWKS endpoint."""
+    global _jwks_client
+    if _jwks_client is None:
+        _jwks_client = jwt.PyJWKClient(settings.IDENTITY_JWKS)
+    return _jwks_client
+
 
 def jwt_auth_required(func):
     """
@@ -55,7 +65,11 @@ def jwt_auth_required(func):
                 )
                 response_status_code = token_verify_response.status_code
                 if response_status_code == status.HTTP_200_OK:
-                    decoded = jwt.decode(token, options={"verify_signature": False})
+                    jwks_client = _get_jwks_client()
+                    signing_key = jwks_client.get_signing_key_from_jwt(token)
+                    decoded = jwt.decode(
+                        token, signing_key.key, algorithms=["RS256"]
+                    )
                     username = decoded["sub"]
                     user = User.objects.get(email=username)
                     # Add user object to the view function if authorized
@@ -74,7 +88,7 @@ def jwt_auth_required(func):
                 content_type="application/json",
             )
 
-        except (jwt.exceptions.DecodeError, User.DoesNotExist) as e:
+        except (jwt.PyJWTError, User.DoesNotExist) as e:
             logger.debug(
                 f"JWT token verification failed with exception: {e}", exc_info=True
             )
