@@ -103,8 +103,7 @@ func GetOwners(w http.ResponseWriter, r *http.Request) {
 		owner.RegistrationDate = ftime.ISO8601(time.Now().AddDate(-1*i, 0, 0))
 		owners = append(owners, owner)
 	}
-	response, _ := json.Marshal(owners)
-	w.Write(response)
+	json.NewEncoder(w).Encode(owners)
 }
 
 func GetPayMentInfo(w http.ResponseWriter, r *http.Request) {
@@ -141,13 +140,10 @@ func GetPayMentInfo(w http.ResponseWriter, r *http.Request) {
 	payment_res.CardType = payment_card.CreditCardType()
 	payment_res.Amount = p_req.Amount
 	payment_res.Currency = "USD"
-	response_body, err := json.Marshal(payment_res)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Bad Request. Invalid Body %s", err.Error()), 400)
-		return
-	}
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(response_body)
+	if err := json.NewEncoder(w).Encode(payment_res); err != nil {
+		log.Printf("Failed to encode payment response: %s", err.Error())
+	}
 }
 
 func checkCreds(user string, pass string) bool {
