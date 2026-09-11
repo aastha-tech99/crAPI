@@ -26,3 +26,7 @@ spec:
         envFrom:
           - configMapRef:
               name: crapi-web-configmap
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: false
+          readOnlyRootFilesystem: false
