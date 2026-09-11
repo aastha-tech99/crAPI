@@ -70,7 +70,7 @@ public class SMTPMailServer {
       msg.setFrom(new InternetAddress(mailhogConfiguration.getFrom(), false));
 
       msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(sendMail));
-      msg.setSubject(subject);
+      msg.setSubject(sanitizeHeader(subject));
       msg.setContent(body, "text/html");
       msg.setSentDate(new Date());
 
@@ -81,5 +81,15 @@ public class SMTPMailServer {
     } catch (Exception e) {
       e.printStackTrace();
     }
+  }
+
+  /**
+   * Strips CR and LF characters from a header value to prevent SMTP header injection.
+   */
+  private static String sanitizeHeader(String value) {
+    if (value == null) {
+      return null;
+    }
+    return value.replaceAll("[\\r\\n]", "");
   }
 }
