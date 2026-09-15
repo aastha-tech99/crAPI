@@ -14,15 +14,20 @@
 
 package com.crapi.constant;
 
+import java.util.ResourceBundle;
+
 public class UserMessage {
+
+  private static final ResourceBundle USER_MESSAGES =
+      ResourceBundle.getBundle("user-messages");
 
   public static final String LOGIN_SUCCESSFULL_MESSAGE = "Login successful";
   public static final String OTP_REQUIRED_MESSAGE =
       "User is locked. OTP has been sent to your email. Please provide that to unlock the account.";
   public static final String API_KEY_GENERATED_MESSAGE =
-      "Api Key generated successfully. Use it in authorization header with ApiKey prefix.";
+      USER_MESSAGES.getString("api.key.generated.message");
   public static final String API_KEY_GENERATION_FAILED =
-      "Api Key generation failed! Only permitted for admin users.";
+      USER_MESSAGES.getString("api.key.generation.failed");
   public static final String ACCOUNT_LOCK_MESSAGE = "User account has been locked.";
   public static final String ACCOUNT_LOCKED_MESSAGE =
       "User account is locked. Retry login with MFA to unlock.";
@@ -31,8 +36,8 @@ public class UserMessage {
   public static final String ACCOUNT_UNLOCKED_MESSAGE = "User account is unlocked.";
   public static final String INVALID_CREDENTIALS = "Invalid Credentials";
   public static final String SIGN_UP_SUCCESS_MESSAGE =
-      "User registered successfully! Please Login.";
-  public static final String SIGN_UP_FAILED = "User registered failed! Please retry.";
+      USER_MESSAGES.getString("sign.up.success.message");
+  public static final String SIGN_UP_FAILED = USER_MESSAGES.getString("sign.up.failed");
   public static final String NUMBER_ALREADY_REGISTERED = "Number already registered! Number: ";
   public static final String NUMBER_NOT_REGISTERED = "Given Number is not registered! Number:";
   public static final String CHANGE_PHONE_MESSAGE =
@@ -52,7 +57,8 @@ public class UserMessage {
   public static final String OTP_VERIFIED_SUCCESS = "OTP verified";
   public static final String OTP_SEND_SUCCESS_ON_EMAIL = "OTP Sent on the provided email, ";
   public static final String EXCEED_NUMBER_OF_ATTEMPS = "You've exceeded the number of attempts.";
-  public static final String PASSWORD_GOT_RESET = "Password reset successful.";
+  public static final String PASSWORD_RESET_SUCCESS_MESSAGE =
+      USER_MESSAGES.getString("password.reset.success.message");
   public static final String VEHICLE_MODEL_IS_NOT_AVAILABLE =
       "Sorry we don't have Vehicle model for this company. Please select other..";
   public static final String VEHICLE_SAVED_SUCCESSFULLY = "Vehicle saved successfully!";

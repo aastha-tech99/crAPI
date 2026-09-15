@@ -92,7 +92,7 @@ public class UserServiceImplTest {
     LoginForm loginForm = getDummyLoginForm();
     User user = new User("email@example.com", "9798789212", "Pass", ERole.ROLE_USER);
     CRAPIResponse crapiAPIResponse = new CRAPIResponse();
-    crapiAPIResponse.setMessage(UserMessage.PASSWORD_GOT_RESET);
+    crapiAPIResponse.setMessage(UserMessage.PASSWORD_RESET_SUCCESS_MESSAGE);
     crapiAPIResponse.setStatus(200);
     Mockito.doReturn(user).when(userService).getUserFromToken(Mockito.any());
     Mockito.when(encoder.encode(Mockito.anyString())).thenReturn("newPassword");
@@ -106,7 +106,7 @@ public class UserServiceImplTest {
     LoginForm loginForm = getDummyLoginForm();
     User user = getDummyUser();
     CRAPIResponse crapiAPIResponse = new CRAPIResponse();
-    crapiAPIResponse.setMessage(UserMessage.PASSWORD_GOT_RESET);
+    crapiAPIResponse.setMessage(UserMessage.PASSWORD_RESET_SUCCESS_MESSAGE);
     crapiAPIResponse.setStatus(200);
     Mockito.doReturn(null).when(userService).getUserFromToken(Mockito.any());
     userService.resetPassword(loginForm, getMockHttpRequest());
