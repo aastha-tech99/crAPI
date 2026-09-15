@@ -62,7 +62,7 @@ public class UserController {
 
     CRAPIResponse resetPasswordResponse = userService.resetPassword(loginForm, request);
     if (resetPasswordResponse != null && resetPasswordResponse.getStatus() == 200) {
-      return ResponseEntity.ok().body(new CRAPIResponse(UserMessage.PASSWORD_GOT_RESET));
+      return ResponseEntity.ok().body(new CRAPIResponse(UserMessage.PASSWORD_RESET_SUCCESS_MESSAGE));
     }
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(resetPasswordResponse);
   }

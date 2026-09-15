@@ -52,7 +52,7 @@ public class UserMessage {
   public static final String OTP_VERIFIED_SUCCESS = "OTP verified";
   public static final String OTP_SEND_SUCCESS_ON_EMAIL = "OTP Sent on the provided email, ";
   public static final String EXCEED_NUMBER_OF_ATTEMPS = "You've exceeded the number of attempts.";
-  public static final String PASSWORD_GOT_RESET = "Password reset successful.";
+  public static final String PASSWORD_RESET_SUCCESS_MESSAGE = "Password reset successful.";
   public static final String VEHICLE_MODEL_IS_NOT_AVAILABLE =
       "Sorry we don't have Vehicle model for this company. Please select other..";
   public static final String VEHICLE_SAVED_SUCCESSFULLY = "Vehicle saved successfully!";
