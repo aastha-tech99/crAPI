@@ -1,6 +1,6 @@
 import logging
 import os
-import random
+import secrets
 from uuid import uuid4
 
 from quart import Blueprint, jsonify, request
@@ -86,7 +86,7 @@ async def init():
             logger.error("openai_api_key not provided")
             return jsonify({"message": "openai_api_key not provided"}), 400
         openai_api_key: str = data["openai_api_key"]
-        logger.debug("OpenAI API Key %s", openai_api_key[:5])
+        logger.debug("OpenAI API key provided")
         await store_api_key(session_id, openai_api_key, provider)
         return jsonify({"message": "Initialized"}), 200
     if provider == "anthropic":
@@ -101,7 +101,7 @@ async def init():
             logger.error("anthropic_api_key not provided")
             return jsonify({"message": "anthropic_api_key not provided"}), 400
         anthropic_api_key: str = data["anthropic_api_key"]
-        logger.debug("Anthropic API Key %s", anthropic_api_key[:5])
+        logger.debug("Anthropic API key provided")
         await store_api_key(session_id, anthropic_api_key, provider)
         return jsonify({"message": "Initialized"}), 200
     error = _validate_provider_env(provider)
@@ -152,13 +152,15 @@ async def chat():
     model_name = await get_model_name(session_id)
     user_jwt = await get_user_jwt()
 
+    provider_configured = bool(provider_api_key)
+    identity_provided = bool(user_jwt)
     logger.info(
-        "=== CHAT AI CONFIG === session_id: %s, provider: %s, model_name: %s, has_api_key: %s, has_jwt: %s",
+        "=== CHAT AI CONFIG === session_id: %s, provider: %s, model_name: %s, auth_configured: %s, identity_provided: %s",
         session_id,
         provider,
         model_name or "(will derive default)",
-        bool(provider_api_key),
-        bool(user_jwt),
+        provider_configured,
+        identity_provided,
     )
     logger.info(
         "Environment AI Config - LLM_MODEL_NAME: %s, EMBEDDINGS_MODEL: %s, EMBEDDINGS_DIMENSIONS: %d",
@@ -174,7 +176,7 @@ async def chat():
             else "Missing Anthropic API key. Please authenticate."
         )
         logger.warning(
-            "API key missing for provider - session_id: %s, provider: %s",
+            "Authentication key missing for provider - session_id: %s, provider: %s",
             session_id,
             provider,
         )
@@ -209,7 +211,7 @@ async def chat():
             "The AI model is temporarily at capacity. Please try your question again soon.",
             "Processing is taking longer than expected due to demand. Please try again in a bit.",
         ]
-        return jsonify({"id": id, "message": random.choice(_busy_responses)}), 200
+        return jsonify({"id": id, "message": secrets.choice(_busy_responses)}), 200
 
     try:
         reply, response_id = await process_user_message(
@@ -239,7 +241,7 @@ async def state():
     provider_api_key = await get_api_key(session_id)
     if provider in {"openai", "anthropic"} and provider_api_key:
         logger.debug(
-            "Provider API key for session %s: %s", session_id, provider_api_key[:5]
+            "Provider authentication key present for session %s", session_id
         )
         chat_history = await get_chat_history(session_id)
         chat_history = trim_messages_to_token_limit(chat_history)

@@ -31,6 +31,9 @@ import com.crapi.utils.ProfileValidator;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -237,11 +240,13 @@ public class ProfileServiceImpl implements ProfileService {
               && enable_shell_injection
               && optionalProfileVideo.get().getConversion_params() != null) {
             profileVideo = optionalProfileVideo.get();
-            String conversionCommand =
-                String.format(
-                    "convertVideo -i %s %s",
-                    profileVideo.getVideo_name(), profileVideo.getConversion_params());
-            return new CRAPIResponse(conversionShell.executeBashCommand(conversionCommand), 200);
+            List<String> commandArgs = new ArrayList<>();
+            commandArgs.add("-i");
+            commandArgs.add(profileVideo.getVideo_name());
+            commandArgs.addAll(
+                Arrays.asList(profileVideo.getConversion_params().trim().split("\\s+")));
+            return new CRAPIResponse(
+                conversionShell.executeAllowedCommand("convertVideo", commandArgs), 200);
           }
           return new CRAPIResponse(UserMessage.CONVERT_VIDEO_INTERNAL_ERROR, 500);
         }

@@ -28,6 +28,10 @@ spec:
             - mountPath: /var/lib/postgresql/data
               name: postgres-data
               subPath: postgres
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            readOnlyRootFilesystem: false
       volumes:
         - name: postgres-data
           persistentVolumeClaim:

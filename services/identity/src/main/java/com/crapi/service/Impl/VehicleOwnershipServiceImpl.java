@@ -26,7 +26,7 @@ import java.util.*;
 import javax.net.ssl.SSLContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.classic.HttpClient;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.DefaultHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustAllStrategy;
 import org.apache.http.conn.ssl.TrustStrategy;
@@ -69,9 +69,9 @@ public class VehicleOwnershipServiceImpl implements VehicleOwnershipService {
     RestTemplateBuilder builder = new RestTemplateBuilder();
     TrustStrategy allTrustStrategy = new TrustAllStrategy();
     SSLContext sslContext =
-        org.apache.http.ssl.SSLContexts.custom().loadTrustMaterial(null, allTrustStrategy).build();
+        org.apache.http.ssl.SSLContexts.custom().setProtocol("TLSv1.3").loadTrustMaterial(null, allTrustStrategy).build();
     SSLConnectionSocketFactory csf =
-        new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
+        new SSLConnectionSocketFactory(sslContext, new String[]{"TLSv1.2", "TLSv1.3"}, null, new DefaultHostnameVerifier());
     CloseableHttpClient httpClient =
         HttpClients.custom().setSSLSocketFactory(csf).setSSLContext(sslContext).build();
     builder =

@@ -133,6 +133,14 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": MAX_LIMIT,
     "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
     "UNAUTHENTICATED_USER": None,  # Needed once you disable django.contrib.auth
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "100/hour",
+        "user": "1000/hour",
+    },
 }
 LOGGING = {
     "version": 1,
@@ -251,6 +259,9 @@ IDENTITY_LOGIN = "http://{}/identity/api/auth/login".format(
 IDENTITY_HEALTH = "http://{}/identity/health_check".format(
     get_env_value("IDENTITY_SERVICE")
 )
+IDENTITY_JWKS = "http://{}/identity/api/auth/jwks.json".format(
+    get_env_value("IDENTITY_SERVICE")
+)
 TLS_ENABLED = os.environ.get("TLS_ENABLED")
 if TLS_ENABLED and (TLS_ENABLED.lower() in ["true", "1", "yes"]):
     IDENTITY_VERIFY = "https://{}/identity/api/auth/verify".format(
@@ -260,5 +271,8 @@ if TLS_ENABLED and (TLS_ENABLED.lower() in ["true", "1", "yes"]):
         get_env_value("IDENTITY_SERVICE")
     )
     IDENTITY_HEALTH = "https://{}/identity/health_check".format(
+        get_env_value("IDENTITY_SERVICE")
+    )
+    IDENTITY_JWKS = "https://{}/identity/api/auth/jwks.json".format(
         get_env_value("IDENTITY_SERVICE")
     )

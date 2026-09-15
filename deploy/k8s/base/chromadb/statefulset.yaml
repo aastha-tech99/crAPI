@@ -27,6 +27,10 @@ spec:
           volumeMounts:
             - mountPath: /data
               name: chromadb-data
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            readOnlyRootFilesystem: false
       volumes:
         - name: chromadb-data
           persistentVolumeClaim:
