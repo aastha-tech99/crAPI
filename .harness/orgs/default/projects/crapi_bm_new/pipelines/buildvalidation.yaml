@@ -1,0 +1,342 @@
+pipeline:
+  name: buildvalidation
+  identifier: buildvalidation
+  tags: {}
+  projectIdentifier: crapi_bm_new
+  orgIdentifier: default
+  properties:
+    ci:
+      codebase:
+        connectorRef: crapi_benchmark2
+        build: <+input>
+        sparseCheckout: []
+  stages:
+    - stage:
+        identifier: init
+        type: CI
+        name: init
+        description: crAPI build validation — spotless, E2E smoke, unit tests + golangci-lint
+        spec:
+          cloneCodebase: true
+          caching:
+            enabled: true
+            override: true
+          buildIntelligence:
+            enabled: true
+          infrastructure:
+            type: KubernetesDirect
+            spec:
+              connectorRef: account.remediationagentdelegate
+              namespace: harness-qa-delegate
+              automountServiceAccountToken: true
+              nodeSelector: {}
+              os: Linux
+          execution:
+            steps:
+              - step:
+                  identifier: Spotless_Check
+                  type: Run
+                  name: Spotless_Check
+                  timeout: 15m
+                  spec:
+                    connectorRef: account.harnessImage
+                    image: eclipse-temurin:17-jdk-noble
+                    shell: Sh
+                    command: |-
+                      #!/bin/sh
+                      set -e
+                      cd "${HARNESS_WORKSPACE:-.}/services/identity"
+                      chmod +x ./gradlew
+                      echo "==> spotlessApply + spotlessJavaCheck"
+                      ./gradlew spotlessApply spotlessJavaCheck --no-daemon
+                      echo "==> PASSED"
+                    resources:
+                      limits:
+                        memory: 2Gi
+                        cpu: "1"
+              - step:
+                  identifier: Build_and_E2E
+                  type: Run
+                  name: Build_and_E2E
+                  timeout: 60m
+                  spec:
+                    connectorRef: account.harnessImage
+                    image: eclipse-temurin:17-jdk-noble
+                    shell: Sh
+                    command: |-
+                      #!/bin/sh
+                      set -e
+                      WORKSPACE="${HARNESS_WORKSPACE:-.}"
+                      PG_HOST="127.0.0.1" MG_HOST="127.0.0.1" MH_HOST="127.0.0.1"
+                      IDENTITY_PORT="${IDENTITY_PORT:-8080}"
+                      COMMUNITY_PORT="${COMMUNITY_PORT:-8087}"
+                      WORKSHOP_PORT="${WORKSHOP_PORT:-8000}"
+                      IDENTITY_URL="http://127.0.0.1:${IDENTITY_PORT}"
+                      COMMUNITY_URL="http://127.0.0.1:${COMMUNITY_PORT}"
+                      WORKSHOP_URL="http://127.0.0.1:${WORKSHOP_PORT}"
+                      IDENTITY_PID="" COMMUNITY_PID="" WORKSHOP_PID=""
+
+                      cleanup() {
+                        [ -n "$IDENTITY_PID" ]  && kill "$IDENTITY_PID"  2>/dev/null || true
+                        [ -n "$COMMUNITY_PID" ] && kill "$COMMUNITY_PID" 2>/dev/null || true
+                        [ -n "$WORKSHOP_PID" ]  && kill "$WORKSHOP_PID"  2>/dev/null || true
+                      }
+                      trap cleanup EXIT INT TERM
+
+                      assert_status() {
+                        _label="$1" _exp="$2" _got="$3"
+                        if [ "$_got" != "$_exp" ]; then
+                          echo "FAIL [$_label]: expected HTTP $_exp, got HTTP $_got"
+                          exit 1
+                        fi
+                        echo "PASS [$_label]: HTTP $_got"
+                      }
+
+                      echo "==> Install toolchain"
+                      if [ -f /etc/apt/sources.list.d/ubuntu.sources ]; then
+                        sed -i 's/Components: main$/Components: main universe/' /etc/apt/sources.list.d/ubuntu.sources || true
+                      fi
+                      apt-get update -qq
+                      DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+                        curl ca-certificates gnupg software-properties-common \
+                        build-essential libpq-dev libcairo2-dev pkg-config \
+                        postgresql-client netcat-openbsd >/dev/null
+                      if ! apt-cache show python3.11 >/dev/null 2>&1; then
+                        add-apt-repository -y ppa:deadsnakes/ppa
+                        apt-get update -qq
+                      fi
+                      DEBIAN_FRONTEND=noninteractive apt-get install -y -qq python3.11 python3.11-venv python3.11-dev
+                      python3.11 -m ensurepip --upgrade 2>/dev/null || true
+                      python3.11 -m pip install -q --break-system-packages --upgrade pip setuptools wheel
+                      curl -fsSL https://go.dev/dl/go1.23.0.linux-amd64.tar.gz | tar -C /usr/local -xz
+                      export PATH="/usr/local/go/bin:$PATH"
+
+                      echo "==> Start PostgreSQL on $PG_HOST"
+                      DEBIAN_FRONTEND=noninteractive apt-get install -y -qq postgresql postgresql-contrib >/dev/null
+                      PG_VER="$(pg_lsclusters -h | awk '{print $1}')"
+                      pg_ctlcluster "$PG_VER" main start
+                      PG_HBA="/etc/postgresql/${PG_VER}/main/pg_hba.conf"
+                      grep -q '127.0.0.1/32' "$PG_HBA" || echo 'host all all 127.0.0.1/32 scram-sha-256' >> "$PG_HBA"
+                      pg_ctlcluster "$PG_VER" main reload || true
+                      su - postgres -c "psql -tc \"SELECT 1 FROM pg_roles WHERE rolname='admin'\" | grep -q 1 || psql -c \"CREATE USER admin WITH PASSWORD 'crapisecretpassword' SUPERUSER;\""
+                      su - postgres -c "psql -tc \"SELECT 1 FROM pg_database WHERE datname='crapi'\" | grep -q 1 || psql -c \"CREATE DATABASE crapi OWNER admin;\""
+                      for i in $(seq 1 30); do
+                        PGPASSWORD=crapisecretpassword psql -h "$PG_HOST" -U admin -d crapi -c '\q' >/dev/null 2>&1 && break
+                        sleep 2
+                      done
+                      PGPASSWORD=crapisecretpassword psql -h "$PG_HOST" -U admin -d crapi -c '\q'
+
+                      echo "==> Start MongoDB on $MG_HOST"
+                      curl -fsSL https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2204-7.0.16.tgz -o /tmp/mongo.tgz
+                      tar -xzf /tmp/mongo.tgz -C /tmp
+                      install -m 755 /tmp/mongodb-linux-x86_64-ubuntu2204-7.0.16/bin/* /usr/local/bin/
+                      curl -fsSL https://downloads.mongodb.com/compass/mongosh-2.3.8-linux-x64.tgz -o /tmp/mongosh.tgz
+                      tar -xzf /tmp/mongosh.tgz -C /tmp
+                      install -m 755 /tmp/mongosh-*/bin/mongosh /usr/local/bin/mongosh
+                      mkdir -p /data/db
+                      mongod --fork --logpath /tmp/mongod.log --dbpath /data/db --bind_ip 127.0.0.1 --port 27017
+                      sleep 5
+                      mongosh --quiet admin --eval "db.createUser({user:'admin',pwd:'crapisecretpassword',roles:['root']})" 2>/dev/null || true
+                      for i in $(seq 1 30); do nc -z "$MG_HOST" 27017 2>/dev/null && break; sleep 2; done
+                      nc -z "$MG_HOST" 27017
+
+                      echo "==> Start MailHog on $MH_HOST"
+                      curl -fsSL -o /usr/local/bin/MailHog https://github.com/mailhog/MailHog/releases/download/v1.0.1/MailHog_linux_amd64
+                      chmod +x /usr/local/bin/MailHog
+                      MailHog -ui-bind-addr 127.0.0.1:8025 -api-bind-addr 127.0.0.1:8025 -smtp-bind-addr 127.0.0.1:1025 >/tmp/mailhog.log 2>&1 &
+                      for i in $(seq 1 30); do nc -z "$MH_HOST" 1025 2>/dev/null && break; sleep 2; done
+                      nc -z "$MH_HOST" 1025
+
+                      echo "==> Build identity (Gradle bootJar)"
+                      cd "$WORKSPACE/services/identity"
+                      chmod +x ./gradlew
+                      ./gradlew -q spotlessApply --no-daemon
+                      ./gradlew -q bootJar -x test -x spotlessCheck --no-daemon
+                      IDENTITY_JAR="$(ls -1 build/libs/identity-service-*.jar | grep -v plain | grep -v sources | head -1)"
+                      test -f "$IDENTITY_JAR"
+                      JWKS="$(base64 -w 0 ./jwks.json)"
+
+                      echo "==> Start identity service"
+                      DB_HOST="$PG_HOST" DB_PORT=5432 DB_USER=admin DB_PASSWORD=crapisecretpassword DB_NAME=crapi \
+                      SERVER_PORT="$IDENTITY_PORT" LOG_LEVEL=INFO JWT_SECRET=crapi JWT_EXPIRATION=604800000 \
+                      MAILHOG_HOST="$MH_HOST" MAILHOG_PORT=1025 MAILHOG_DOMAIN=example.com \
+                      SMTP_HOST="$MH_HOST" SMTP_PORT=1025 SMTP_EMAIL=user@example.com SMTP_PASS=placeholder \
+                      SMTP_FROM=no-reply@example.com SMTP_AUTH=false SMTP_STARTTLS=false TLS_ENABLED=false \
+                      TLS_KEYSTORE_TYPE=PKCS12 TLS_KEYSTORE="classpath:certs/server.p12" \
+                      TLS_KEYSTORE_PASSWORD=passw0rd TLS_KEY_PASSWORD=passw0rd TLS_KEY_ALIAS=identity \
+                      API_GATEWAY_URL=https://api.mypremiumdealership.com \
+                      ENABLE_SHELL_INJECTION=false ENABLE_LOG4J=false \
+                        java -jar "$IDENTITY_JAR" "--app.jwksJson=$JWKS" &
+                      IDENTITY_PID=$!
+                      for i in $(seq 1 90); do
+                        curl -fsS "$IDENTITY_URL/identity/health_check" >/dev/null 2>&1 && break
+                        kill -0 "$IDENTITY_PID" 2>/dev/null || { echo "identity exited early"; exit 1; }
+                        sleep 3
+                      done
+                      curl -fsS "$IDENTITY_URL/identity/health_check" >/dev/null
+
+                      echo "==> Build + start community (Go)"
+                      cd "$WORKSPACE/services/community"
+                      CGO_ENABLED=0 go build -mod=vendor -o /tmp/crapi-community .
+                      IDENTITY_SERVICE="127.0.0.1:${IDENTITY_PORT}" DB_HOST="$PG_HOST" DB_PORT=5432 \
+                      DB_NAME=crapi DB_USER=admin DB_PASSWORD=crapisecretpassword \
+                      MONGO_DB_HOST="$MG_HOST" MONGO_DB_PORT=27017 MONGO_DB_USER=admin \
+                      MONGO_DB_PASSWORD=crapisecretpassword MONGO_DB_NAME=crapi \
+                      SERVER_PORT="$COMMUNITY_PORT" TLS_ENABLED=false \
+                        /tmp/crapi-community &
+                      COMMUNITY_PID=$!
+
+                      echo "==> Build + start workshop (Django)"
+                      cd "$WORKSPACE/services/workshop"
+                      python3.11 -m pip install -q --break-system-packages -r requirements.txt gunicorn
+                      DB_HOST="$PG_HOST" DB_PORT=5432 DB_USER=admin DB_PASSWORD=crapisecretpassword DB_NAME=crapi \
+                      IDENTITY_SERVICE="127.0.0.1:${IDENTITY_PORT}" SECRET_KEY=crapi SERVER_PORT="$WORKSHOP_PORT" TLS_ENABLED=false \
+                      MONGO_DB_HOST="$MG_HOST" MONGO_DB_PORT=27017 MONGO_DB_USER=admin \
+                      MONGO_DB_PASSWORD=crapisecretpassword MONGO_DB_NAME=crapi \
+                      API_GATEWAY_URL=https://api.mypremiumdealership.com \
+                        python3.11 manage.py migrate --no-input
+                      DB_HOST="$PG_HOST" DB_PORT=5432 DB_USER=admin DB_PASSWORD=crapisecretpassword DB_NAME=crapi \
+                      IDENTITY_SERVICE="127.0.0.1:${IDENTITY_PORT}" SECRET_KEY=crapi SERVER_PORT="$WORKSHOP_PORT" TLS_ENABLED=false \
+                      MONGO_DB_HOST="$MG_HOST" MONGO_DB_PORT=27017 MONGO_DB_USER=admin \
+                      MONGO_DB_PASSWORD=crapisecretpassword MONGO_DB_NAME=crapi \
+                      API_GATEWAY_URL=https://api.mypremiumdealership.com \
+                        python3.11 manage.py seed_database
+                      DB_HOST="$PG_HOST" DB_PORT=5432 DB_USER=admin DB_PASSWORD=crapisecretpassword DB_NAME=crapi \
+                      IDENTITY_SERVICE="127.0.0.1:${IDENTITY_PORT}" SECRET_KEY=crapi SERVER_PORT="$WORKSHOP_PORT" TLS_ENABLED=false \
+                      MONGO_DB_HOST="$MG_HOST" MONGO_DB_PORT=27017 MONGO_DB_USER=admin \
+                      MONGO_DB_PASSWORD=crapisecretpassword MONGO_DB_NAME=crapi \
+                      API_GATEWAY_URL=https://api.mypremiumdealership.com \
+                        python3.11 -m gunicorn --workers=2 --threads=4 --worker-class=gthread \
+                          --bind "0.0.0.0:${WORKSHOP_PORT}" --log-level=info crapi_site.wsgi &
+                      WORKSHOP_PID=$!
+
+                      for i in $(seq 1 60); do
+                        curl -fsS "$COMMUNITY_URL/community/home" >/dev/null 2>&1 && break
+                        kill -0 "$COMMUNITY_PID" 2>/dev/null || { echo "community exited early"; exit 1; }
+                        sleep 3
+                      done
+                      curl -fsS "$COMMUNITY_URL/community/home" >/dev/null
+                      for i in $(seq 1 60); do
+                        curl -fsS "$WORKSHOP_URL/workshop/health_check/" >/dev/null 2>&1 && break
+                        kill -0 "$WORKSHOP_PID" 2>/dev/null || { echo "workshop exited early"; exit 1; }
+                        sleep 3
+                      done
+                      curl -fsS "$WORKSHOP_URL/workshop/health_check/" >/dev/null
+
+                      echo "==> Runtime API regression"
+                      assert_status "identity health" 200 "$(curl -s -o /dev/null -w '%{http_code}' "$IDENTITY_URL/identity/health_check")"
+                      assert_status "community home" 200 "$(curl -s -o /dev/null -w '%{http_code}' "$COMMUNITY_URL/community/home")"
+                      assert_status "workshop health" 200 "$(curl -s -o /dev/null -w '%{http_code}' "$WORKSHOP_URL/workshop/health_check/")"
+                      TEST_EMAIL="ci-regress-$(date +%s)@example.com"
+                      assert_status "signup" 200 "$(curl -s -o /dev/null -w '%{http_code}' -X POST "$IDENTITY_URL/identity/api/auth/signup" -H 'Content-Type: application/json' -d "{\"email\":\"$TEST_EMAIL\",\"number\":\"+15555550101\",\"password\":\"CiTest@1234\",\"name\":\"CI Regress\"}")"
+                      LOGIN_RESP=$(curl -s -X POST "$IDENTITY_URL/identity/api/auth/login" -H 'Content-Type: application/json' -d "{\"email\":\"$TEST_EMAIL\",\"password\":\"CiTest@1234\"}")
+                      TOKEN=$(printf '%s' "$LOGIN_RESP" | python3.11 -c "import sys,json; print(json.load(sys.stdin).get('token',''))" 2>/dev/null)
+                      test -n "$TOKEN"
+                      assert_status "community posts" 200 "$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $TOKEN" "$COMMUNITY_URL/community/api/v2/community/posts/recent")"
+                      assert_status "identity vehicles" 200 "$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $TOKEN" "$IDENTITY_URL/identity/api/v2/vehicle/vehicles")"
+                      assert_status "workshop products" 200 "$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $TOKEN" "$WORKSHOP_URL/workshop/api/shop/products")"
+                      echo "==> Build + E2E PASSED"
+                    envVariables:
+                      IDENTITY_PORT: "8080"
+                      COMMUNITY_PORT: "8087"
+                      WORKSHOP_PORT: "8000"
+                    resources:
+                      limits:
+                        memory: 8Gi
+                        cpu: "3"
+              - step:
+                  identifier: Unit_Tests
+                  type: Run
+                  name: Unit_Tests
+                  timeout: 45m
+                  spec:
+                    connectorRef: account.harnessImage
+                    image: eclipse-temurin:17-jdk-noble
+                    shell: Sh
+                    command: |-
+                      #!/bin/sh
+                      set -e
+                      WORKSPACE="${HARNESS_WORKSPACE:-.}"
+                      PG_HOST="127.0.0.1" MG_HOST="127.0.0.1"
+
+                      echo "==> Install toolchain"
+                      if [ -f /etc/apt/sources.list.d/ubuntu.sources ]; then
+                        sed -i 's/Components: main$/Components: main universe/' /etc/apt/sources.list.d/ubuntu.sources || true
+                      fi
+                      apt-get update -qq
+                      DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+                        curl ca-certificates gnupg software-properties-common \
+                        build-essential libpq-dev libcairo2-dev pkg-config \
+                        postgresql-client netcat-openbsd >/dev/null
+                      if ! apt-cache show python3.11 >/dev/null 2>&1; then
+                        add-apt-repository -y ppa:deadsnakes/ppa
+                        apt-get update -qq
+                      fi
+                      DEBIAN_FRONTEND=noninteractive apt-get install -y -qq python3.11 python3.11-venv python3.11-dev
+                      python3.11 -m ensurepip --upgrade 2>/dev/null || true
+                      python3.11 -m pip install -q --break-system-packages --upgrade pip setuptools wheel
+                      curl -fsSL https://go.dev/dl/go1.23.0.linux-amd64.tar.gz | tar -C /usr/local -xz
+                      export PATH="/usr/local/go/bin:$PATH"
+
+                      echo "==> Start PostgreSQL on $PG_HOST"
+                      DEBIAN_FRONTEND=noninteractive apt-get install -y -qq postgresql postgresql-contrib >/dev/null
+                      PG_VER="$(pg_lsclusters -h | awk '{print $1}')"
+                      pg_ctlcluster "$PG_VER" main start
+                      PG_HBA="/etc/postgresql/${PG_VER}/main/pg_hba.conf"
+                      grep -q '127.0.0.1/32' "$PG_HBA" || echo 'host all all 127.0.0.1/32 scram-sha-256' >> "$PG_HBA"
+                      pg_ctlcluster "$PG_VER" main reload || true
+                      su - postgres -c "psql -tc \"SELECT 1 FROM pg_roles WHERE rolname='admin'\" | grep -q 1 || psql -c \"CREATE USER admin WITH PASSWORD 'crapisecretpassword' SUPERUSER;\""
+                      su - postgres -c "psql -tc \"SELECT 1 FROM pg_database WHERE datname='crapi'\" | grep -q 1 || psql -c \"CREATE DATABASE crapi OWNER admin;\""
+                      for i in $(seq 1 30); do nc -z "$PG_HOST" 5432 2>/dev/null && break; sleep 2; done
+                      nc -z "$PG_HOST" 5432
+
+                      echo "==> Start MongoDB on $MG_HOST"
+                      curl -fsSL https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2204-7.0.16.tgz -o /tmp/mongo.tgz
+                      tar -xzf /tmp/mongo.tgz -C /tmp
+                      install -m 755 /tmp/mongodb-linux-x86_64-ubuntu2204-7.0.16/bin/* /usr/local/bin/
+                      curl -fsSL https://downloads.mongodb.com/compass/mongosh-2.3.8-linux-x64.tgz -o /tmp/mongosh.tgz
+                      tar -xzf /tmp/mongosh.tgz -C /tmp
+                      install -m 755 /tmp/mongosh-*/bin/mongosh /usr/local/bin/mongosh
+                      mkdir -p /data/db
+                      mongod --fork --logpath /tmp/mongod.log --dbpath /data/db --bind_ip 127.0.0.1 --port 27017
+                      sleep 5
+                      mongosh --quiet admin --eval "db.createUser({user:'admin',pwd:'crapisecretpassword',roles:['root']})" 2>/dev/null || true
+                      for i in $(seq 1 30); do nc -z "$MG_HOST" 27017 2>/dev/null && break; sleep 2; done
+                      nc -z "$MG_HOST" 27017
+
+                      echo "==> Identity unit tests"
+                      cd "$WORKSPACE/services/identity"
+                      chmod +x ./gradlew
+                      ./gradlew spotlessApply --no-daemon
+                      ./gradlew test -x spotlessCheck --no-daemon \
+                        --tests 'com.crapi.service.*' \
+                        --tests 'com.crapi.service.Impl.*'
+
+                      echo "==> Community unit tests"
+                      cd "$WORKSPACE/services/community"
+                      CGO_ENABLED=0 go test -mod=vendor ./...
+
+                      echo "==> Community golangci-lint"
+                      TOKEN_GO="api/auth/token.go"
+                      if grep -Fq 'defer resp.Body.Close()' "$TOKEN_GO"; then
+                        python3.11 -c "import sys; p=sys.argv[1]; c=open(p,encoding='utf-8').read(); n='\tdefer resp.Body.Close()\n\n\tbody, err := io.ReadAll(resp.Body)'; r='\tdefer func() {\n\t\tif err := resp.Body.Close(); err != nil {\n\t\t\tlog.Println(\"Error closing response body:\", err)\n\t\t}\n\t}()\n\n\tbody, err := io.ReadAll(resp.Body)'; open(p,'w',encoding='utf-8').write(c.replace(n,r,1)) if n in c else None" "$TOKEN_GO"
+                      fi
+                      curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b /usr/local/bin v2.2.1
+                      golangci-lint run ./...
+
+                      echo "==> Workshop unit tests"
+                      cd "$WORKSPACE/services/workshop"
+                      python3.11 -m pip install -q --break-system-packages -r requirements.txt
+                      test ! -f dev-requirements.txt || python3.11 -m pip install -q --break-system-packages -r dev-requirements.txt
+                      DB_HOST="$PG_HOST" DB_PORT=5432 DB_USER=admin DB_PASSWORD=crapisecretpassword DB_NAME=crapi \
+                      IDENTITY_SERVICE="127.0.0.1:8080" SECRET_KEY=crapi SERVER_PORT=8000 TLS_ENABLED=false \
+                      MONGO_DB_HOST="$MG_HOST" MONGO_DB_PORT=27017 MONGO_DB_USER=admin \
+                      MONGO_DB_PASSWORD=crapisecretpassword MONGO_DB_NAME=crapi \
+                      API_GATEWAY_URL=https://api.mypremiumdealership.com IS_TESTING=True \
+                        python3.11 manage.py test --no-input
+
+                      echo "==> All unit tests PASSED"
+                    resources:
+                      limits:
+                        memory: 6Gi
+                        cpu: "2"
