@@ -22,7 +22,7 @@ import {
   ProfileOutlined,
   CaretDownOutlined,
 } from "@ant-design/icons";
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import roleTypes from "../../constants/roleTypes";
 import type { MenuProps } from "antd";
 import { useNavigate } from "react-router-dom";
@@ -58,6 +58,26 @@ interface NavbarProps extends PropsFromRedux {}
 const Navbar: React.FC<NavbarProps> = (props) => {
   const { logOutUser, isLoggedIn, name, role, profilePicData } = props;
   const navigate = useNavigate();
+  const prevRoleRef = useRef(role);
+
+  // Invalidate session on privilege (role) change to prevent
+  // session fixation (CWE-384)
+  useEffect(() => {
+    if (
+      isLoggedIn &&
+      prevRoleRef.current &&
+      role &&
+      prevRoleRef.current !== role
+    ) {
+      localStorage.clear();
+      logOutUser({
+        callback: () => {
+          localStorage.clear();
+        },
+      });
+    }
+    prevRoleRef.current = role;
+  }, [role, isLoggedIn, logOutUser]);
 
   const logout = () => {
     logOutUser({

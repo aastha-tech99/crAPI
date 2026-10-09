@@ -71,8 +71,10 @@ const userReducer = (
         ...state,
       };
     case actionTypes.LOGGED_IN:
+      // Clear previous session entirely before establishing new one
+      // to prevent session fixation (CWE-384)
       return {
-        ...state,
+        ...initialData,
         fetchingData: false,
         isLoggedIn: true,
         accessToken: maction.payload.token,
@@ -90,6 +92,11 @@ const userReducer = (
         message: maction.payload.message,
       };
     case actionTypes.FETCHED_USER:
+      // If the user's role changed, invalidate session to force
+      // re-authentication with a fresh token (CWE-384)
+      if (state.role && maction.payload.role !== state.role) {
+        return initialData;
+      }
       return {
         ...state,
         id: maction.payload.id,

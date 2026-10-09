@@ -496,10 +496,19 @@ What would you like to do next?`);
     },
   };
 
-  // Initialize component
+  // Reset chatbot state when session changes (token/role rotation)
+  // to prevent stale session usage after privilege change (CWE-384)
   useEffect(() => {
     console.log("ChatBot component initialized");
-  }, [props.accessToken, props.isLoggedIn]);
+    setChatbotState((prev) => ({
+      ...prev,
+      accessToken: props.accessToken,
+      isLoggedIn: props.isLoggedIn,
+      role: props.role,
+      messages: [],
+    }));
+    setChatResetKey((prev) => prev + 1);
+  }, [props.accessToken, props.isLoggedIn, props.role]);
 
   return (
     <Row>

@@ -121,6 +121,10 @@ export function* logIn(action: MyAction): Generator<any, void, any> {
       throw responseJSON;
     }
 
+    // Clear previous session data before establishing new session
+    // to prevent session fixation (CWE-384)
+    localStorage.clear();
+
     const getUrl = APIService.IDENTITY_SERVICE + requestURLS.GET_USER;
     headers = {
       "Content-Type": "application/json",
@@ -182,6 +186,10 @@ export function* unlock(action: MyAction): Generator<any, void, any> {
     if (!receivedResponse.ok) {
       throw responseJSON;
     }
+
+    // Clear previous session data before establishing new session
+    // to prevent session fixation (CWE-384)
+    localStorage.clear();
 
     const getUrl = APIService.IDENTITY_SERVICE + requestURLS.GET_USER;
     headers = {

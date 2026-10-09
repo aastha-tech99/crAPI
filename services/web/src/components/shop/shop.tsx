@@ -368,7 +368,6 @@ const Shop: React.FC<ShopProps> = (props) => {
 
 interface RootState {
   shopReducer: {
-    accessToken: string;
     availableCredit: number;
     products: Product[];
     prevOffset: number | null;
@@ -376,20 +375,22 @@ interface RootState {
     purchaseInFlight: boolean;
   };
   userReducer: {
+    accessToken: string;
     role: string;
   };
 }
 
 const mapStateToProps = (state: RootState) => {
   const {
-    accessToken,
     availableCredit,
     products,
     prevOffset,
     nextOffset,
     purchaseInFlight,
   } = state.shopReducer;
-  const { role } = state.userReducer;
+  // Use accessToken from userReducer to ensure it is always the
+  // current session token after privilege changes (CWE-384)
+  const { role, accessToken } = state.userReducer;
   return {
     accessToken,
     availableCredit,

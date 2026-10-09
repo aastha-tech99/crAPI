@@ -15,7 +15,7 @@
 
 import "./layout.css";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 import { Navigate, Route, Routes } from "react-router-dom";
 import { Layout, Spin } from "antd";
@@ -168,6 +168,26 @@ const StyledComp: React.FC<PropsFromRedux> = (props) => {
   const isLoggedIn = props.isLoggedIn;
   const accessToken = props.accessToken;
   const validateAccessToken = props.validateAccessToken;
+  const prevRoleRef = useRef(props.role);
+
+  // Invalidate session on privilege (role) change to prevent
+  // session fixation (CWE-384)
+  useEffect(() => {
+    if (
+      isLoggedIn &&
+      prevRoleRef.current &&
+      props.role &&
+      prevRoleRef.current !== props.role
+    ) {
+      localStorage.clear();
+      props.logOutUser({
+        callback: () => {
+          localStorage.clear();
+        },
+      });
+    }
+    prevRoleRef.current = props.role;
+  }, [props.role, isLoggedIn, props.logOutUser]);
 
   useEffect(() => {
     window.addEventListener("resize", handleResize);
