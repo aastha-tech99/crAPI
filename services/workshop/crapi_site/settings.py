@@ -103,6 +103,8 @@ CORS_ORIGIN_ALLOW_ALL = True
 
 X_FRAME_OPTIONS = "DENY"
 
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
 ROOT_URLCONF = "crapi_site.urls"
 
 TEST_RUNNER = "xmlrunner.extra.djangotestrunner.XMLTestRunner"
