@@ -100,9 +100,11 @@ const AfterLogin: React.FC<AfterLoginProps> = ({
   }
 
   if (!isAccessTokenValid(accessToken || "")) {
+    // Clear stale session data immediately before dispatching logout
+    localStorage.clear();
     logOutUser({
       callback: () => {
-        localStorage.clear();
+        // Session data already cleared above; reducer also clears on LOG_OUT
       },
     });
     return <Navigate to="/login" />;

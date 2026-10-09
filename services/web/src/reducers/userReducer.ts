@@ -71,6 +71,8 @@ const userReducer = (
         ...state,
       };
     case actionTypes.LOGGED_IN:
+      // Clear previous session data to enforce session rotation on privilege change
+      localStorage.clear();
       return {
         ...state,
         fetchingData: false,
@@ -90,6 +92,10 @@ const userReducer = (
         message: maction.payload.message,
       };
     case actionTypes.FETCHED_USER:
+      // If the role changed, clear old session data to enforce session rotation
+      if (state.role && maction.payload.role && state.role !== maction.payload.role) {
+        localStorage.clear();
+      }
       return {
         ...state,
         id: maction.payload.id,
@@ -100,8 +106,12 @@ const userReducer = (
       };
     case actionTypes.LOG_OUT:
       console.log("Logged out");
+      // Clear all stored session data on logout to prevent session reuse
+      localStorage.clear();
       return initialData;
     case actionTypes.INVALID_SESSION:
+      // Clear all stored session data when session is invalidated
+      localStorage.clear();
       return initialData;
     case actionTypes.BALANCE_CHANGED:
       return {

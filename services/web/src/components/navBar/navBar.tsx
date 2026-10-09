@@ -60,9 +60,11 @@ const Navbar: React.FC<NavbarProps> = (props) => {
   const navigate = useNavigate();
 
   const logout = () => {
+    // Clear session data immediately to prevent stale token reuse
+    localStorage.clear();
     logOutUser({
       callback: () => {
-        localStorage.clear();
+        // Session data already cleared above; reducer also clears on LOG_OUT
       },
     });
   };

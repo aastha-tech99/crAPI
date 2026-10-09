@@ -135,6 +135,17 @@ const Shop: React.FC<ShopProps> = (props) => {
     role,
   } = props;
 
+  // Redirect to login if the access token has been cleared (session rotation)
+  const prevRoleRef = React.useRef(role);
+  React.useEffect(() => {
+    if (prevRoleRef.current && role && prevRoleRef.current !== role) {
+      // Role changed: clear stale session data and redirect for re-authentication
+      localStorage.clear();
+      navigate("/login");
+    }
+    prevRoleRef.current = role;
+  }, [role, navigate]);
+
   return (
     <Layout className="page-container">
       <PageHeader

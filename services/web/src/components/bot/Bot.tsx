@@ -496,10 +496,27 @@ What would you like to do next?`);
     },
   };
 
-  // Initialize component
+  // Clear chatbot session state when auth credentials change (session rotation)
+  const prevAccessTokenRef = React.useRef(props.accessToken);
+  const prevRoleRef = React.useRef(props.role);
   useEffect(() => {
-    console.log("ChatBot component initialized");
-  }, [props.accessToken, props.isLoggedIn]);
+    const tokenChanged = prevAccessTokenRef.current !== props.accessToken && prevAccessTokenRef.current !== "";
+    const roleChanged = prevRoleRef.current !== props.role && prevRoleRef.current !== "";
+    if (tokenChanged || roleChanged) {
+      // Privilege or session changed: reset chatbot state to prevent stale session reuse
+      setChatbotState((prev) => ({
+        ...prev,
+        accessToken: props.accessToken,
+        isLoggedIn: props.isLoggedIn,
+        role: props.role,
+        messages: [],
+        openapiKey: null,
+      }));
+      setChatResetKey((prev) => prev + 1);
+    }
+    prevAccessTokenRef.current = props.accessToken;
+    prevRoleRef.current = props.role;
+  }, [props.accessToken, props.isLoggedIn, props.role]);
 
   return (
     <Row>
