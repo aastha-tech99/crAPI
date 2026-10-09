@@ -24,7 +24,7 @@ public interface UserService {
 
   void updateUserToken(String jwt, String email);
 
-  User updateUserPassword(String password, String email);
+  boolean updateUserPassword(String password, String email);
 
   CRAPIResponse resetPassword(LoginForm loginForm, HttpServletRequest request)
       throws UnsupportedEncodingException;

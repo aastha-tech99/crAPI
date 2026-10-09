@@ -37,7 +37,7 @@ public class User {
 
   @JsonIgnore private String password;
 
-  private String number;
+  @JsonIgnore private String number;
 
   @JsonIgnore
   @Column(length = 500)
@@ -47,7 +47,7 @@ public class User {
   @Column(length = 1000)
   private String apiKey;
 
-  private LocalDate createdOn = LocalDate.now();
+  @JsonIgnore private LocalDate createdOn = LocalDate.now();
 
   @JsonIgnore private LocalDate passwordUpdatedAt = LocalDate.of(2000, 1, 1);
 
@@ -56,7 +56,7 @@ public class User {
   @JsonIgnore @Version private Long version;
 
   // @OneToOne
-  private ERole role;
+  @JsonIgnore private ERole role;
 
   public User() {}
 
@@ -69,6 +69,7 @@ public class User {
     this.code = "";
   }
 
+  @JsonIgnore
   public boolean isMfaRequired() {
     return code != null && !code.isEmpty();
   }

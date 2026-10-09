@@ -182,14 +182,15 @@ public class UserServiceImpl implements UserService {
    */
   @Transactional
   @Override
-  public User updateUserPassword(String password, String email) {
+  public boolean updateUserPassword(String password, String email) {
     User user = userRepository.findByEmail(email);
     if (user != null) {
       user.setPassword(encoder.encode(password));
       user.setPasswordUpdatedAt(LocalDate.now());
       userRepository.saveAndFlush(user);
+      return true;
     }
-    return user;
+    return false;
   }
 
   /**

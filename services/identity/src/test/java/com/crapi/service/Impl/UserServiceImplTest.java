@@ -245,7 +245,8 @@ public class UserServiceImplTest {
     String samplePassword = "samplePassword"; // test-only placeholder, not a real credential
     Mockito.when(userRepository.findByEmail(user.getEmail())).thenReturn(user);
     Mockito.when(userRepository.saveAndFlush(Mockito.any())).thenReturn(user);
-    userService.updateUserPassword(samplePassword, getDummyUser().getEmail());
+    boolean result = userService.updateUserPassword(samplePassword, getDummyUser().getEmail());
+    Assertions.assertTrue(result);
     Assertions.assertEquals(user.getPassword(), encoder.encode(samplePassword));
     Mockito.verify(userRepository, Mockito.times(1)).saveAndFlush(Mockito.any());
     Mockito.verify(userRepository, Mockito.times(1)).findByEmail(user.getEmail());

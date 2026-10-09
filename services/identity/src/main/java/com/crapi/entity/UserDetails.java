@@ -34,11 +34,11 @@ public class UserDetails {
   private String name;
   private String status;
   private double available_credit;
-  @Lob private byte[] picture;
+  @JsonIgnore @Lob private byte[] picture;
 
   @JsonIgnore @Version private Long version;
 
-  @OneToOne private User user;
+  @JsonIgnore @OneToOne private User user;
 
   public long getId() {
     return id;

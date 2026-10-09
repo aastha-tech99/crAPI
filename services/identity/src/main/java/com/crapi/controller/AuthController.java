@@ -17,7 +17,6 @@ package com.crapi.controller;
 import com.crapi.config.JwtProvider;
 import com.crapi.constant.TestUsers;
 import com.crapi.constant.UserMessage;
-import com.crapi.entity.User;
 import com.crapi.model.*;
 import com.crapi.service.OtpService;
 import com.crapi.service.UserRegistrationService;
@@ -181,9 +180,9 @@ public class AuthController {
   public ResponseEntity<?> resetPassword() {
     ArrayList<SeedUser> userDetailList = new TestUsers().getUsers();
     for (SeedUser userDetails : userDetailList) {
-      User resetUser =
+      boolean updated =
           userService.updateUserPassword(userDetails.getPassword(), userDetails.getEmail());
-      if (resetUser == null)
+      if (!updated)
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body(new CRAPIResponse("Internal Server Error", 500));
     }
