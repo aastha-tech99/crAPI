@@ -135,7 +135,7 @@ public class UserServiceImplTest {
   @Test
   public void testAuthenticateUserLogin() throws UnsupportedEncodingException {
     LoginForm loginForm = getDummyLoginForm();
-    String sampleJwtToken = "sampleToken";
+    String sampleJwtToken = "sampleToken"; // test-only placeholder, not a real credential
     User user = getDummyUser();
     Mockito.when(authenticationManager.authenticate(Mockito.any()))
         .thenReturn(
@@ -164,7 +164,7 @@ public class UserServiceImplTest {
   @Test
   public void testAuthenticateUserLoginLog4J() throws UnsupportedEncodingException {
     LoginForm loginForm = getDummyLoginFormByEmail("${jndi:ldap://127.0.0.1/a}");
-    String sampleJwtToken = "sampleToken";
+    String sampleJwtToken = "sampleToken"; // test-only placeholder, not a real credential
     User user = getDummyUser();
     when(userService.isLog4jEnabled()).thenReturn(true);
     // Mockito.when(authenticationManager.authenticate(Mockito.any()))
@@ -242,7 +242,7 @@ public class UserServiceImplTest {
   @Test
   public void testUpdateUserPassword() {
     User user = getDummyUser();
-    String samplePassword = "samplePassword";
+    String samplePassword = "samplePassword"; // test-only placeholder, not a real credential
     Mockito.when(userRepository.findByEmail(user.getEmail())).thenReturn(user);
     Mockito.when(userRepository.saveAndFlush(Mockito.any())).thenReturn(user);
     userService.updateUserPassword(samplePassword, getDummyUser().getEmail());
