@@ -58,7 +58,7 @@ def jwt_auth_required(func):
                 )
                 response_status_code = token_verify_response.status_code
                 if response_status_code == status.HTTP_200_OK:
-                    decoded = jwt.decode(token, options={"verify_signature": False})
+                    decoded = jwt.decode(token, options={"verify_signature": False}, algorithms=["RS256"])
                     username = decoded["sub"]
                     user = User.objects.get(email=username)
                     # Add user object to the view function if authorized
