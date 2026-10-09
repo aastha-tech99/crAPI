@@ -20,6 +20,8 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
+      securityContext:
+        runAsNonRoot: true
       initContainers:
         - name: wait-for-postgres
           image: {{ .Values.waitForK8sResources.image }}

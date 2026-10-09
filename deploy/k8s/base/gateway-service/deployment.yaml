@@ -12,6 +12,8 @@ spec:
       labels:
         app: gateway-service
     spec:
+      securityContext:
+        runAsNonRoot: true
       containers:
       - name: gateway-service
         image: crapi/gateway-service:latest

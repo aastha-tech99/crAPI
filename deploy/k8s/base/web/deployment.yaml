@@ -12,6 +12,8 @@ spec:
       labels:
         app: crapi-web
     spec:
+      securityContext:
+        runAsNonRoot: true
       containers:
       - name: crapi-web
         image: crapi/crapi-web:latest

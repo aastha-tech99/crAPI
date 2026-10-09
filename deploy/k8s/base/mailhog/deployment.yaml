@@ -18,8 +18,9 @@ spec:
         sidecar.traceable.ai/inject: "false"
     spec:
       securityContext:
-        runAsUser: 0
-        runAsGroup: 0
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
       containers:
         - name: mailhog
           image: crapi/mailhog:latest

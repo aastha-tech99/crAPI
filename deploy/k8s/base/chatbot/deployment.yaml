@@ -12,6 +12,8 @@ spec:
       labels:
         app: crapi-chatbot
     spec:
+      securityContext:
+        runAsNonRoot: true
       containers:
       - name: crapi-chatbot
         image: crapi/crapi-chatbot:latest

@@ -12,6 +12,8 @@ spec:
       labels:
         app: crapi-community
     spec:
+      securityContext:
+        runAsNonRoot: true
       initContainers:
         - name: wait-for-postgres
           image: groundnuty/k8s-wait-for:v1.3

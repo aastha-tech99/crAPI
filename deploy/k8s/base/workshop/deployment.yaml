@@ -12,6 +12,8 @@ spec:
       labels:
         app: crapi-workshop
     spec:
+      securityContext:
+        runAsNonRoot: true
       initContainers:
         - name: wait-for-crapi-identity
           image: groundnuty/k8s-wait-for:v1.3
