@@ -9,12 +9,17 @@ import (
 	"math/rand"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/bradfitz/iter"
 	"github.com/dustin/go-humanize"
 	"github.com/jaswdr/faker"
 )
+
+// idempotencyStore tracks processed Idempotency-Key values and their
+// responses so that duplicate payment requests are not processed twice.
+var idempotencyStore sync.Map
 
 type VINOwner struct {
 	VIN              string `json:"vin"`
@@ -118,6 +123,22 @@ func GetPayMentInfo(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized.", 401)
 		return
 	}
+
+	// Require an Idempotency-Key header for payment operations to prevent
+	// duplicate processing of the same request under concurrent submission.
+	idempotencyKey := r.Header.Get("Idempotency-Key")
+	if idempotencyKey == "" {
+		http.Error(w, "Bad Request. Idempotency-Key header is required.", 400)
+		return
+	}
+
+	// If this key was already processed, return the cached response.
+	if cached, ok := idempotencyStore.Load(idempotencyKey); ok {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(cached.([]byte))
+		return
+	}
+
 	var p_req PaymentInfoRequest
 	err := json.NewDecoder(r.Body).Decode(&p_req)
 	if err != nil {
@@ -146,6 +167,11 @@ func GetPayMentInfo(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Bad Request. Invalid Body %s", err.Error()), 400)
 		return
 	}
+
+	// Store the response for this idempotency key so duplicate requests
+	// receive the same result without re-processing.
+	idempotencyStore.Store(idempotencyKey, response_body)
+
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(response_body)
 }
