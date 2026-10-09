@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y \
     cmake \
     libmagic1 \
     && rm -rf /var/lib/apt/lists/*
+RUN useradd -r -u 1001 -m appuser
 
 # Set the working directory in the container
 WORKDIR /app
@@ -21,5 +22,7 @@ RUN mkdir -p /app/resources
 COPY src/resources/crapi-openapi-spec.json /app/resources/crapi-openapi-spec.json
 ENV PYTHONPATH="/app"
 COPY entrypoint.sh /app/entrypoint.sh
+RUN chown -R appuser:appuser /app
+USER appuser
 CMD /app/entrypoint.sh
 EXPOSE 5002 5500

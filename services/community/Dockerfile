@@ -30,7 +30,7 @@ RUN cp /build/main .
 
 # Main Image
 FROM alpine:3
-
+RUN adduser -D -u 1001 appuser
 # go
 WORKDIR /app
 RUN apk update && apk add --no-cache curl
@@ -39,8 +39,10 @@ COPY certs /app/certs
 COPY health.sh /app/health.sh
 RUN ls -al /app
 
+RUN chown -R appuser:appuser /app
 ARG SERVER_PORT
 EXPOSE ${SERVER_PORT}
 # Expose profiling port
 EXPOSE 6060
+USER appuser
 CMD /app/main

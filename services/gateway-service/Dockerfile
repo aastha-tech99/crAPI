@@ -22,13 +22,15 @@ WORKDIR /app
 RUN set -x && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     ca-certificates && \
     rm -rf /var/lib/apt/lists/*
+RUN useradd -r -u 1001 -m appuser
 
 # Copy the binary to the production image from the builder stage.
 COPY --from=builder /app/server /app/server
 COPY --from=builder /app/public.crt /app/server.crt
 COPY --from=builder /app/private.key /app/server.key
 
+RUN chown -R appuser:appuser /app
 EXPOSE 443
-
+USER appuser
 CMD ["/app/server"]
 

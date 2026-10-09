@@ -36,6 +36,7 @@ COPY ./ /app
 RUN pip install wheel && pip wheel . --wheel-dir /app/wheels
 
 FROM python:3.11-alpine
+RUN adduser -D -u 1001 appuser
 COPY --from=build /app /app
 WORKDIR /app
 RUN apk update && apk add --no-cache postgresql-libs curl cairo
@@ -43,6 +44,8 @@ RUN pip install "setuptools>=70.0.0,<82"
 RUN pip install --no-index --find-links=/app/wheels -r requirements.txt
 COPY ./certs /app/certs
 COPY health.sh /app/health.sh
+RUN chown -R appuser:appuser /app
 ARG SERVER_PORT
 EXPOSE ${SERVER_PORT}
+USER appuser
 CMD ["/app/runner.sh"]

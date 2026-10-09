@@ -26,6 +26,7 @@ RUN ls /app/build
 
 # Main Image
 FROM openresty/openresty:alpine
+RUN adduser -D -u 1001 appuser
 RUN apk add gettext curl
 # React
 RUN rm /etc/nginx/conf.d/default.conf
@@ -41,7 +42,11 @@ RUN mkdir -p /usr/share/nginx/html/debug && \
     chmod 666 /usr/share/nginx/html/debug/access.log && \
     chown -R nobody:nobody /usr/share/nginx/html/debug
 RUN echo "daemon off;" >> /usr/local/openresty/nginx/conf/nginx.conf
+RUN chown -R appuser:appuser /usr/share/nginx/html /app /etc/nginx/conf.d \
+    && mkdir -p /var/run/openresty /usr/local/openresty/nginx/logs \
+    && chown -R appuser:appuser /var/run/openresty /usr/local/openresty/nginx/logs \
+    && chown -R appuser:appuser /usr/local/openresty/nginx/conf
 EXPOSE 80
 EXPOSE 443
-
+USER appuser
 CMD [ "/etc/nginx/nginx-wrapper.sh" ]

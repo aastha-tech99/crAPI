@@ -27,6 +27,7 @@ RUN gradle bootJar
 FROM eclipse-temurin:17-noble
 # #Java
 RUN apt -y update && apt -y install curl && apt -y clean
+RUN useradd -r -u 1001 -m appuser
 # RUN apt -y update && apt -y install wget curl unzip && apt -y clean
 # RUN wget https://www.yourkit.com/download/docker/YourKit-JavaProfiler-2023.9-docker.zip -P /tmp/ && \
 #   unzip /tmp/YourKit-JavaProfiler-2023.9-docker.zip -d /usr/local && \
@@ -44,4 +45,6 @@ ENV JAVA_TOOL_OPTIONS="-Xmx128m"
 COPY jwks.json /app/default_jwks.json
 COPY entrypoint.sh /entrypoint.sh
 COPY health.sh /app/health.sh
+RUN chown -R appuser:appuser /app
+USER appuser
 CMD [ "/entrypoint.sh"]
