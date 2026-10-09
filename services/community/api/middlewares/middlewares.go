@@ -17,17 +17,43 @@ package middlewares
 import (
 	"errors"
 	"net/http"
+	"os"
+	"strings"
 
 	"crapi.proj/goservice/api/auth"
 	"crapi.proj/goservice/api/responses"
 	"github.com/jinzhu/gorm"
 )
 
+// getAllowedOrigin checks the request Origin against the CORS_ALLOWED_ORIGINS
+// env var (comma-separated list). Returns the matched origin, or empty string
+// if the origin is not allowed. When the env var is unset, no origin is
+// permitted (same-origin only).
+func getAllowedOrigin(r *http.Request) string {
+	allowed := os.Getenv("CORS_ALLOWED_ORIGINS")
+	if allowed == "" {
+		return ""
+	}
+	origin := r.Header.Get("Origin")
+	if origin == "" {
+		return ""
+	}
+	for _, o := range strings.Split(allowed, ",") {
+		if strings.TrimSpace(o) == origin {
+			return origin
+		}
+	}
+	return ""
+}
+
 //SetMiddlewareJSON set content type and options
 func SetMiddlewareJSON(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		if origin := getAllowedOrigin(r); origin != "" {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Vary", "Origin")
+		}
 		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 		if r.Method == "OPTIONS" {
@@ -40,7 +66,10 @@ func SetMiddlewareJSON(next http.HandlerFunc) http.HandlerFunc {
 //AccessControlMiddleware set content type of header
 func AccessControlMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		if origin := getAllowedOrigin(r); origin != "" {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Vary", "Origin")
+		}
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS,PUT")
 		w.Header().Set("Access-Control-Allow-Headers", "authorization,content-type")
 
