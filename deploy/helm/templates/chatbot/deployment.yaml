@@ -57,10 +57,17 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ .Values.chatbot.config.name }}
-          {{- if .Values.chatbot.resources }}
           resources:
+            {{- if .Values.chatbot.resources }}
             {{- toYaml .Values.chatbot.resources | nindent 12 }}
-          {{- end }}
+            {{- else }}
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            {{- end }}
           readinessProbe:
             tcpSocket:
               port: {{ .Values.chatbot.port }}

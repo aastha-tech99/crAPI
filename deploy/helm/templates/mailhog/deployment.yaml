@@ -53,7 +53,14 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ .Values.mailhog.config.name }}
-          {{- if .Values.mailhog.resources }}
           resources:
+            {{- if .Values.mailhog.resources }}
             {{- toYaml .Values.mailhog.resources | nindent 12 }}
-          {{- end }}
+            {{- else }}
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            {{- end }}

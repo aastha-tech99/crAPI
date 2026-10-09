@@ -85,6 +85,13 @@ web:
     name: crapi-web-configmap
     labels:
       app: crapi-web
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
   deploymentLabels:
     app: crapi-web
   podLabels:
@@ -127,6 +134,13 @@ identity:
     keyStorePassword: passw0rd
     keyPassword: passw0rd
     keyAlias: identity
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
   deploymentLabels:
     app: crapi-identity
   podLabels:
@@ -157,6 +171,13 @@ community:
       app: crapi-community
     postgresDbDriver: postgres
     mongoDbDriver: mongodb
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
   deploymentLabels:
     app: crapi-community
   podLabels:
@@ -276,6 +297,13 @@ chatbot:
       resources:
         requests:
           storage: 1Gi
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
   deploymentLabels:
     app: crapi-chatbot
   podLabels:
@@ -307,6 +335,13 @@ mailhog:
     labels:
       app: mailhog
     mailhogStorage: mongodb
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
   deploymentLabels:
     app: mailhog
   podLabels:
@@ -354,6 +389,13 @@ mongodb:
       resources:
         requests:
           storage: 2Gi
+  resources:
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+    requests:
+      cpu: "250m"
+      memory: "256Mi"
   serviceSelectorLabels:
     app: mongodb
   podLabels:
@@ -398,6 +440,13 @@ postgresdb:
       resources:
         requests:
           storage: 2Gi
+  resources:
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+    requests:
+      cpu: "250m"
+      memory: "256Mi"
   serviceSelectorLabels:
     app: postgresdb
   podLabels:
@@ -420,6 +469,13 @@ apiGatewayService:
     name: gateway-service
     labels:
       app: gateway-service
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
   deploymentLabels:
     app: gateway-service
   podLabels:
@@ -463,6 +519,13 @@ chromadb:
       resources:
         requests:
           storage: 2Gi
+  resources:
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+    requests:
+      cpu: "250m"
+      memory: "256Mi"
   serviceSelectorLabels:
     app: chromadb
   podLabels:

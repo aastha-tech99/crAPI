@@ -27,10 +27,17 @@ spec:
           ports:
             - containerPort: 443
             - containerPort: 80
-          {{- if .Values.web.resources }}
           resources:
+            {{- if .Values.web.resources }}
             {{- toYaml .Values.web.resources | nindent 12 }}
-          {{- end }}
+            {{- else }}
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ .Values.web.config.name }}

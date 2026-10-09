@@ -52,10 +52,17 @@ spec:
           envFrom:
               - configMapRef:
                   name: {{ .Values.identity.config.name }}
-          {{- if .Values.identity.resources }}
           resources:
+            {{- if .Values.identity.resources }}
             {{- toYaml .Values.identity.resources | nindent 12 }}
-          {{- end }}
+            {{- else }}
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            {{- end }}
           readinessProbe:
             tcpSocket:
               port: {{ .Values.identity.port }}

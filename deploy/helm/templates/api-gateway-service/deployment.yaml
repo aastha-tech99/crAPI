@@ -29,10 +29,17 @@ spec:
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           ports:
             - containerPort: {{ .Values.apiGatewayService.port }}
-          {{- if .Values.apiGatewayService.resources }}
           resources:
+            {{- if .Values.apiGatewayService.resources }}
             {{- toYaml .Values.apiGatewayService.resources | nindent 12 }}
-          {{- end }}
+            {{- else }}
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            {{- end }}
           readinessProbe:
             tcpSocket:
               port: {{ .Values.apiGatewayService.port }}
