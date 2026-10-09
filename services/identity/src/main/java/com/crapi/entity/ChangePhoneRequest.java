@@ -2,6 +2,7 @@ package com.crapi.entity;
 
 import com.crapi.enums.EStatus;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 @Entity
@@ -12,9 +13,11 @@ public class ChangePhoneRequest {
   @GeneratedValue(strategy = GenerationType.AUTO)
   private long id;
 
+  @Pattern(regexp = "^\\+?[0-9]+$", message = "Invalid phone number")
   @Column(name = "new_phone")
   private String newPhone;
 
+  @Pattern(regexp = "^\\+?[0-9]+$", message = "Invalid phone number")
   @Column(name = "old_phone")
   private String oldPhone;
 
@@ -28,10 +31,18 @@ public class ChangePhoneRequest {
   public ChangePhoneRequest() {}
 
   public ChangePhoneRequest(String newPhone, String oldPhone, String otp, User user) {
+    validatePhone(newPhone);
+    validatePhone(oldPhone);
     this.newPhone = newPhone;
     this.oldPhone = oldPhone;
     this.otp = otp;
     this.user = user;
     this.status = EStatus.ACTIVE.toString();
+  }
+
+  private static void validatePhone(String phone) {
+    if (phone == null || !phone.matches("^\\+?[0-9]+$")) {
+      throw new IllegalArgumentException("Invalid phone number");
+    }
   }
 }

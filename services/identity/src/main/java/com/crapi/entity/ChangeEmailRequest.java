@@ -16,6 +16,7 @@ package com.crapi.entity;
 
 import com.crapi.enums.EStatus;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import lombok.Data;
 
 @Entity
@@ -27,9 +28,11 @@ public class ChangeEmailRequest {
   @GeneratedValue(strategy = GenerationType.AUTO)
   private long id;
 
+  @Email
   @Column(name = "new_email")
   private String newEmail;
 
+  @Email
   @Column(name = "old_email")
   private String oldEmail;
 
@@ -43,10 +46,18 @@ public class ChangeEmailRequest {
   public ChangeEmailRequest() {}
 
   public ChangeEmailRequest(String new_email, String oldEmail, String token, User user) {
+    validateEmail(new_email);
+    validateEmail(oldEmail);
     this.newEmail = new_email;
     this.emailToken = token;
     this.oldEmail = oldEmail;
     this.user = user;
     this.status = EStatus.ACTIVE.toString();
+  }
+
+  private static void validateEmail(String email) {
+    if (email == null || !email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
+      throw new IllegalArgumentException("Invalid email address");
+    }
   }
 }
