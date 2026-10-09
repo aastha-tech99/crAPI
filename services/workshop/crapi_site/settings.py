@@ -109,6 +109,8 @@ SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
 ROOT_URLCONF = "crapi_site.urls"
 
 TEST_RUNNER = "xmlrunner.extra.djangotestrunner.XMLTestRunner"
