@@ -57,9 +57,7 @@ IS_TESTING = os.environ.get("IS_TESTING", False)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
-DEBUG = os.environ.get("DEBUG", False)
-if LOG_LEVEL == "DEBUG":
-    DEBUG = True
+DEBUG = os.environ.get("DEBUG", "false").lower() in ("true", "1", "yes")
 
 ALLOWED_HOSTS = ["*"]
 
