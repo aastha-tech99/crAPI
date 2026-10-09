@@ -33,6 +33,9 @@ import {
   PRODUCT_NOT_ADDED,
 } from "../constants/messages";
 
+// Client-side lock to prevent duplicate purchase requests while one is in-flight
+let purchaseInFlight = false;
+
 interface ReceivedResponse extends Response {
   ok: boolean;
   message: string | null;
@@ -122,6 +125,13 @@ export function* getProducts(action: MyAction): Generator<any, void, any> {
 export function* buyProduct(action: MyAction): Generator<any, void, any> {
   const { accessToken, productId, callback } = action.payload;
   let recievedResponse: ReceivedResponse = {} as ReceivedResponse;
+
+  if (purchaseInFlight) {
+    callback(responseTypes.FAILURE, PRODUCT_NOT_BOUGHT);
+    return;
+  }
+
+  purchaseInFlight = true;
   try {
     yield put({ type: actionTypes.FETCHING_DATA });
     const postUrl = APIService.WORKSHOP_SERVICE + requestURLS.BUY_PRODUCT;
@@ -151,6 +161,8 @@ export function* buyProduct(action: MyAction): Generator<any, void, any> {
   } catch (e) {
     yield put({ type: actionTypes.FETCHED_DATA, payload: recievedResponse });
     callback(responseTypes.FAILURE, PRODUCT_NOT_BOUGHT);
+  } finally {
+    purchaseInFlight = false;
   }
 }
 
