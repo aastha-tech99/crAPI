@@ -24,6 +24,8 @@ spec:
         envFrom:
             - configMapRef:
                 name: crapi-chatbot-configmap
+            - secretRef:
+                name: crapi-chatbot-secret
         resources:
           limits:
             cpu: "500m"

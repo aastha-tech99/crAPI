@@ -11,13 +11,13 @@ data:
   TLS_ENABLED: "false"
   DB_HOST: "postgresdb"
   DB_USER: "admin"
-  DB_PASSWORD: "crapisecretpassword"
+  # DB_PASSWORD moved to crapi-chatbot-secret Secret resource — credential must be rotated (exposed in git history)
   DB_NAME: "crapi"
   DB_PORT: "5432"
   MONGO_DB_HOST: "mongodb"
   MONGO_DB_PORT: "27017"
   MONGO_DB_USER: "admin"
-  MONGO_DB_PASSWORD: "crapisecretpassword"
+  # MONGO_DB_PASSWORD moved to crapi-chatbot-secret Secret resource — credential must be rotated (exposed in git history)
   MONGO_DB_NAME: "crapi"
   CHATBOT_LIFE: "1"
   CHATBOT_OPENAI_API_KEY: ""
@@ -51,5 +51,5 @@ data:
   CHROMA_HOST: "chromadb"
   CHROMA_PORT: "8000"
   API_USER: "admin@example.com"
-  API_PASSWORD: "Admin!123"
+  # API_PASSWORD moved to crapi-chatbot-secret Secret resource — credential must be rotated (exposed in git history)
   OPENAPI_SPEC: "/app/resources/crapi-openapi-spec.json"
