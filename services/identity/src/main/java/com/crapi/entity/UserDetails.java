@@ -36,8 +36,7 @@ public class UserDetails {
   private double available_credit;
   @Lob private byte[] picture;
 
-  @Version
-  private Long version;
+  @JsonIgnore @Version private Long version;
 
   @OneToOne private User user;
 
@@ -90,6 +89,7 @@ public class UserDetails {
     this.picture = picture;
   }
 
+  @JsonIgnore
   public User getUser() {
     return user;
   }

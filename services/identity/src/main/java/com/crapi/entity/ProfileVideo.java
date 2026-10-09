@@ -28,11 +28,11 @@ public class ProfileVideo {
   private long id;
 
   private String video_name;
-  private String conversion_params = "-v codec h264";
+  @JsonIgnore private String conversion_params = "-v codec h264";
+
   @Lob private byte[] video;
 
-  @Version
-  private Long version;
+  @JsonIgnore @Version private Long version;
 
   @OneToOne
   @JoinColumn(name = "user_id")
