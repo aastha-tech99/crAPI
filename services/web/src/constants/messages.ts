@@ -81,6 +81,7 @@ export const VIDEO_NAME_NOT_CHANGED: string = "Could not change video";
 export const VIDEO_NOT_CONVERTED: string = "Could not convert video";
 export const NO_PRODUCTS: string = "Could not get product details";
 export const PRODUCT_NOT_BOUGHT: string = "Try again after sometime...";
+export const PRODUCT_OUT_OF_STOCK: string = "This item is currently out of stock. Please try again later.";
 export const NO_ORDERS: string = "Could not get orders";
 export const NO_ORDER: string = "Could not get order";
 export const ORDER_NOT_RETURNED: string = "Could not return order";

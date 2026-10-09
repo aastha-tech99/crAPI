@@ -31,7 +31,7 @@ import responseTypes from "../../constants/responseTypes";
 import { FAILURE_MESSAGE, SUCCESS_MESSAGE } from "../../constants/messages";
 
 const ShopContainer = (props) => {
-  const { accessToken, getProducts, buyProduct } = props;
+  const { accessToken, getProducts, buyProduct, purchaseInFlight } = props;
   const navigate = useNavigate();
 
   const [hasErrored, setHasErrored] = React.useState(false);
@@ -59,6 +59,9 @@ const ShopContainer = (props) => {
   }, [accessToken, getProducts]);
 
   const handleBuyProduct = (product) => {
+    if (purchaseInFlight) {
+      return;
+    }
     const callback = (res, data) => {
       if (res === responseTypes.SUCCESS) {
         Modal.success({
@@ -175,8 +178,9 @@ const ShopContainer = (props) => {
 
 const mapStateToProps = ({
   userReducer: { accessToken, prevOffset, nextOffset },
+  shopReducer: { purchaseInFlight },
 }) => {
-  return { accessToken, prevOffset, nextOffset };
+  return { accessToken, prevOffset, nextOffset, purchaseInFlight };
 };
 
 const mapDispatchToProps = {
@@ -197,6 +201,7 @@ ShopContainer.propTypes = {
   nextOffset: PropTypes.number,
   prevOffset: PropTypes.number,
   onOffsetChange: PropTypes.func,
+  purchaseInFlight: PropTypes.bool,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(ShopContainer);

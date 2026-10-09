@@ -65,6 +65,7 @@ interface ShopProps extends PropsFromRedux {
   nextOffset: number | null;
   onOffsetChange: (offset: number | null) => void;
   onBuyProduct: (product: Product) => void;
+  purchaseInFlight: boolean;
   isNewProductFormOpen: boolean;
   setIsNewProductFormOpen: (isOpen: boolean) => void;
   newProductHasErrored: boolean;
@@ -90,7 +91,8 @@ const ProductAvatar: React.FC<{ image_url: string }> = ({ image_url }) => (
 const ProductDescription: React.FC<{
   product: Product;
   onBuyProduct: (product: Product) => void;
-}> = ({ product, onBuyProduct }) => (
+  purchaseInFlight: boolean;
+}> = ({ product, onBuyProduct, purchaseInFlight }) => (
   <div className="product-info">
     <div className="product-title">{product.name}</div>
     <div className="product-price">${Number(product.price).toFixed(2)}</div>
@@ -102,6 +104,8 @@ const ProductDescription: React.FC<{
       key="buy-product"
       className="buy-btn"
       onClick={() => onBuyProduct(product)}
+      disabled={purchaseInFlight}
+      loading={purchaseInFlight}
     >
       Buy
     </Button>
@@ -122,6 +126,7 @@ const Shop: React.FC<ShopProps> = (props) => {
     nextOffset,
     onOffsetChange,
     onBuyProduct,
+    purchaseInFlight,
     isNewProductFormOpen,
     setIsNewProductFormOpen,
     newProductHasErrored,
@@ -194,6 +199,7 @@ const Shop: React.FC<ShopProps> = (props) => {
                     <ProductDescription
                       product={product}
                       onBuyProduct={onBuyProduct}
+                      purchaseInFlight={purchaseInFlight}
                     />
                   }
                 />
@@ -367,6 +373,7 @@ interface RootState {
     products: Product[];
     prevOffset: number | null;
     nextOffset: number | null;
+    purchaseInFlight: boolean;
   };
   userReducer: {
     role: string;
@@ -374,8 +381,14 @@ interface RootState {
 }
 
 const mapStateToProps = (state: RootState) => {
-  const { accessToken, availableCredit, products, prevOffset, nextOffset } =
-    state.shopReducer;
+  const {
+    accessToken,
+    availableCredit,
+    products,
+    prevOffset,
+    nextOffset,
+    purchaseInFlight,
+  } = state.shopReducer;
   const { role } = state.userReducer;
   return {
     accessToken,
@@ -383,6 +396,7 @@ const mapStateToProps = (state: RootState) => {
     products,
     prevOffset,
     nextOffset,
+    purchaseInFlight,
     role,
   };
 };

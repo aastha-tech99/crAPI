@@ -21,6 +21,7 @@ import responseTypes from "../constants/responseTypes";
 import {
   NO_PRODUCTS,
   PRODUCT_NOT_BOUGHT,
+  PRODUCT_OUT_OF_STOCK,
   NO_ORDER,
   NO_ORDERS,
   ORDER_NOT_RETURNED,
@@ -123,6 +124,7 @@ export function* buyProduct(action: MyAction): Generator<any, void, any> {
   const { accessToken, productId, callback } = action.payload;
   let recievedResponse: ReceivedResponse = {} as ReceivedResponse;
   try {
+    yield put({ type: actionTypes.PURCHASE_IN_FLIGHT, payload: true });
     yield put({ type: actionTypes.FETCHING_DATA });
     const postUrl = APIService.WORKSHOP_SERVICE + requestURLS.BUY_PRODUCT;
     const headers = {
@@ -139,6 +141,7 @@ export function* buyProduct(action: MyAction): Generator<any, void, any> {
     });
 
     yield put({ type: actionTypes.FETCHED_DATA, payload: recievedResponse });
+    yield put({ type: actionTypes.PURCHASE_IN_FLIGHT, payload: false });
     if (recievedResponse.ok) {
       yield put({
         type: actionTypes.BALANCE_CHANGED,
@@ -146,10 +149,20 @@ export function* buyProduct(action: MyAction): Generator<any, void, any> {
       });
       callback(responseTypes.SUCCESS, responseJson.message);
     } else {
-      callback(responseTypes.FAILURE, responseJson.message);
+      const isOutOfStock =
+        recievedResponse.status === 409 ||
+        (responseJson.message &&
+          /out of stock|sold out|insufficient (stock|inventory)/i.test(
+            responseJson.message,
+          ));
+      callback(
+        responseTypes.FAILURE,
+        isOutOfStock ? PRODUCT_OUT_OF_STOCK : responseJson.message,
+      );
     }
   } catch (e) {
     yield put({ type: actionTypes.FETCHED_DATA, payload: recievedResponse });
+    yield put({ type: actionTypes.PURCHASE_IN_FLIGHT, payload: false });
     callback(responseTypes.FAILURE, PRODUCT_NOT_BOUGHT);
   }
 }
