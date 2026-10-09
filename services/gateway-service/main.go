@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/bradfitz/iter"
@@ -57,6 +58,56 @@ type PaymentInfoResponse struct {
 	CardExpiry    string  `json:"card_expiry"`
 	Currency      string  `json:"currency"`
 }
+
+// idempotencyEntry stores a cached response for a processed idempotency key.
+type idempotencyEntry struct {
+	statusCode int
+	body       []byte
+	createdAt  time.Time
+}
+
+// idempotencyStore provides in-memory storage with TTL for idempotency keys.
+type idempotencyStore struct {
+	mu      sync.Mutex
+	entries map[string]idempotencyEntry
+	ttl     time.Duration
+}
+
+func newIdempotencyStore(ttl time.Duration) *idempotencyStore {
+	return &idempotencyStore{
+		entries: make(map[string]idempotencyEntry),
+		ttl:     ttl,
+	}
+}
+
+// get returns the cached entry if it exists and is not expired.
+func (s *idempotencyStore) get(key string) (idempotencyEntry, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	entry, ok := s.entries[key]
+	if !ok {
+		return idempotencyEntry{}, false
+	}
+	if time.Since(entry.createdAt) > s.ttl {
+		delete(s.entries, key)
+		return idempotencyEntry{}, false
+	}
+	return entry, true
+}
+
+// set stores a response for the given idempotency key.
+func (s *idempotencyStore) set(key string, statusCode int, body []byte) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.entries[key] = idempotencyEntry{
+		statusCode: statusCode,
+		body:       body,
+		createdAt:  time.Now(),
+	}
+}
+
+// paymentIdempotency is the global idempotency store for payment requests (24h TTL).
+var paymentIdempotency = newIdempotencyStore(24 * time.Hour)
 
 func HelloServer(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
@@ -118,6 +169,21 @@ func GetPayMentInfo(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized.", 401)
 		return
 	}
+
+	// Idempotency check: require an Idempotency-Key header and return
+	// the cached response for duplicate requests to prevent race conditions.
+	idempotencyKey := r.Header.Get("Idempotency-Key")
+	if idempotencyKey == "" {
+		http.Error(w, "Idempotency-Key header is required", http.StatusBadRequest)
+		return
+	}
+	if cached, ok := paymentIdempotency.get(idempotencyKey); ok {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(cached.statusCode)
+		w.Write(cached.body)
+		return
+	}
+
 	var p_req PaymentInfoRequest
 	err := json.NewDecoder(r.Body).Decode(&p_req)
 	if err != nil {
@@ -146,6 +212,8 @@ func GetPayMentInfo(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Bad Request. Invalid Body %s", err.Error()), 400)
 		return
 	}
+	// Cache the successful response for this idempotency key.
+	paymentIdempotency.set(idempotencyKey, http.StatusOK, response_body)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(response_body)
 }
