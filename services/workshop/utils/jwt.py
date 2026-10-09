@@ -28,6 +28,28 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 logger = logging.getLogger()
 
+_cached_signing_key = None
+
+
+def _get_signing_key():
+    """
+    Fetch and cache the RSA public key from the identity service JWKS endpoint
+    for local JWT signature verification.
+    """
+    global _cached_signing_key
+    if _cached_signing_key is not None:
+        return _cached_signing_key
+    identity_base = settings.IDENTITY_VERIFY.rsplit("/identity/", 1)[0]
+    jwks_url = f"{identity_base}/identity/api/auth/jwks.json"
+    resp = requests.get(jwks_url, verify=False)
+    resp.raise_for_status()
+    jwks_data = resp.json()
+    for key_data in jwks_data.get("keys", []):
+        jwk = jwt.PyJWK(key_data)
+        _cached_signing_key = jwk.key
+        return _cached_signing_key
+    raise jwt.exceptions.DecodeError("No valid signing key found in JWKS")
+
 
 def jwt_auth_required(func):
     """
@@ -58,7 +80,8 @@ def jwt_auth_required(func):
                 )
                 response_status_code = token_verify_response.status_code
                 if response_status_code == status.HTTP_200_OK:
-                    decoded = jwt.decode(token, options={"verify_signature": False}, algorithms=["RS256"])
+                    signing_key = _get_signing_key()
+                    decoded = jwt.decode(token, signing_key, algorithms=["RS256"])
                     username = decoded["sub"]
                     user = User.objects.get(email=username)
                     # Add user object to the view function if authorized
