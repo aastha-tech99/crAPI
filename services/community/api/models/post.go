@@ -116,6 +116,13 @@ func GetPostByID(client *mongo.Client, ID string) (Post, error) {
 
 // FindAllPost return all recent post
 func FindAllPost(client *mongo.Client, offset int64, limit int64) (PostsResponse, error) {
+	const maxLimit int64 = 100
+	if limit <= 0 || limit > maxLimit {
+		limit = maxLimit
+	}
+	if offset < 0 {
+		offset = 0
+	}
 	postList := []Post{}
 	postsResponse := PostsResponse{}
 	options := options.Find()
@@ -163,6 +170,13 @@ func FindAllPost(client *mongo.Client, offset int64, limit int64) (PostsResponse
 
 // FindPostsByTitle filters posts by title with pagination
 func FindPostsByTitle(client *mongo.Client, title string, offset int64, limit int64) (PostsResponse, error) {
+	const maxLimit int64 = 100
+	if limit <= 0 || limit > maxLimit {
+		limit = maxLimit
+	}
+	if offset < 0 {
+		offset = 0
+	}
 	postList := []Post{}
 	postsResponse := PostsResponse{}
 
