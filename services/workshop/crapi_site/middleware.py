@@ -24,9 +24,16 @@ class ContentSecurityPolicyMiddleware:
             "CONTENT_SECURITY_POLICY",
             "default-src 'self'",
         )
+        self.permissions_policy = getattr(
+            settings,
+            "PERMISSIONS_POLICY",
+            "camera=(), microphone=(), geolocation=()",
+        )
 
     def __call__(self, request):
         response = self.get_response(request)
         if "Content-Security-Policy" not in response:
             response["Content-Security-Policy"] = self.csp
+        if "Permissions-Policy" not in response:
+            response["Permissions-Policy"] = self.permissions_policy
         return response
