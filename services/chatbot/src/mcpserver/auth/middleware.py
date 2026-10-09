@@ -114,10 +114,10 @@ class MCPAuthMiddleware:
                 )
 
                 if response.status_code == 200:
-                    logger.debug(f"Basic auth successful for user: {email}")
+                    logger.debug("Basic auth successful")
                     return
                 else:
-                    logger.warning(f"Basic auth failed for {email}: {response.status_code}")
+                    logger.warning(f"Basic auth failed: {response.status_code}")
                     raise AuthenticationError("Invalid credentials")
 
             except httpx.RequestError as e:

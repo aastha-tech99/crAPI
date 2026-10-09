@@ -201,7 +201,7 @@ def create_orders():
             transaction_id=uuid.uuid4(),
         )
         order.save()
-        logger.info("Created Order for User %s: %s", user.email, order.__dict__)
+        logger.info("Created Order for User ID %s", user.id)
 
 
 class CRAPIConfig(AppConfig):
