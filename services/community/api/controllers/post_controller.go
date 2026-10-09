@@ -67,8 +67,22 @@ func (s *Server) AddNewPost(w http.ResponseWriter, r *http.Request) {
 func (s *Server) GetPostByID(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
-	//var autherID uint64
-	GetPost, er := models.GetPostByID(s.Client, vars["postID"])
+
+	// Cap comments returned per post to prevent unbounded list responses
+	var commentLimit int64 = 50
+	clParam := r.URL.Query().Get("comment_limit")
+	if clParam != "" {
+		parsed, err := strconv.ParseInt(clParam, 10, 64)
+		if err == nil && parsed > 0 {
+			commentLimit = parsed
+		}
+	}
+	const maxCommentLimit int64 = 200
+	if commentLimit > maxCommentLimit {
+		commentLimit = maxCommentLimit
+	}
+
+	GetPost, er := models.GetPostByID(s.Client, vars["postID"], commentLimit)
 	if er != nil {
 		responses.ERROR(w, http.StatusBadRequest, er)
 	}

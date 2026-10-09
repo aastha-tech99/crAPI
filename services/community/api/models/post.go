@@ -102,26 +102,49 @@ func SavePost(client *mongo.Client, post Post) (Post, error) {
 	return post, err
 }
 
-// GetPostByID fetch post by postId
-func GetPostByID(client *mongo.Client, ID string) (Post, error) {
+// GetPostByID fetch post by postId.
+// An optional commentLimit caps the number of embedded comments returned
+// (most recent). Callers that need all comments (e.g. CommentOnPost) omit it.
+func GetPostByID(client *mongo.Client, ID string, commentLimits ...int64) (Post, error) {
 	var post Post
 
-	//filter := bson.D{{"name", "Ash"}}
 	collection := client.Database("crapi").Collection("post")
 	filter := bson.D{{Key: "id", Value: ID}}
-	err := collection.FindOne(context.TODO(), filter).Decode(&post)
+
+	var err error
+	if len(commentLimits) > 0 && commentLimits[0] > 0 {
+		limit := commentLimits[0]
+		findOpts := options.FindOne().SetProjection(bson.D{
+			{Key: "comments", Value: bson.D{{Key: "$slice", Value: -limit}}},
+		})
+		err = collection.FindOne(context.TODO(), filter, findOpts).Decode(&post)
+	} else {
+		err = collection.FindOne(context.TODO(), filter).Decode(&post)
+	}
 	if err != nil {
 		log.Println(err)
 	}
 
 	return post, err
-
 }
 
-// FindAllPost return all recent post
+// FindAllPost return all recent post with enforced pagination limits
 func FindAllPost(client *mongo.Client, offset int64, limit int64) (PostsResponse, error) {
 	postList := []Post{}
 	postsResponse := PostsResponse{}
+
+	// Enforce pagination bounds at the model layer
+	const maxLimit int64 = 100
+	if limit <= 0 {
+		limit = 30
+	}
+	if limit > maxLimit {
+		limit = maxLimit
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
 	options := options.Find()
 	options.SetSort(bson.D{{Key: "_id", Value: -1}})
 	options.SetLimit(limit)
