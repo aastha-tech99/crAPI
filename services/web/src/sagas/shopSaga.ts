@@ -28,6 +28,7 @@ import {
   COUPON_APPLIED,
   COUPON_NOT_APPLIED,
   COUPON_NOT_CREATED,
+  INVALID_COUPON_AMOUNT,
   NEW_PRODUCT_ADDED,
   PRODUCT_NOT_ADDED,
 } from "../constants/messages";
@@ -315,13 +316,20 @@ export function* applyCoupon(action: MyAction): Generator<any, void, any> {
       yield put({ type: actionTypes.FETCHED_DATA, payload: recievedResponse });
       callback(responseTypes.FAILURE, INVALID_COUPON_CODE);
     } else {
+      const parsedAmount = parseFloat(CouponJson.amount);
+      if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        yield put({ type: actionTypes.FETCHED_DATA, payload: recievedResponse });
+        callback(responseTypes.FAILURE, INVALID_COUPON_AMOUNT);
+        return;
+      }
+
       postUrl = APIService.WORKSHOP_SERVICE + requestURLS.APPLY_COUPON;
       const responseJson = yield fetch(postUrl, {
         headers,
         method: "POST",
         body: JSON.stringify({
           coupon_code: CouponJson.coupon_code,
-          amount: parseFloat(CouponJson.amount),
+          amount: parsedAmount,
         }),
       }).then((response: Response) => {
         recievedResponse = response as ReceivedResponse;

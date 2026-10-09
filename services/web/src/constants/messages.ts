@@ -56,6 +56,7 @@ export const COUPON_CODE_REQUIRED: string = "Please enter a coupon code!";
 export const PRODUCT_DETAILS_REQUIRED: string =
   "Please enter all product details!";
 export const COUPON_AMOUNT_REQUIRED: string = "Please enter a coupon amount!";
+export const INVALID_COUPON_AMOUNT: string = "Invalid coupon amount";
 
 export const NO_VEHICLE_DESC_1: string =
   "Your newly purchased Vehicle Details have been sent to you email address. Please check your email for the VIN and PIN code of your vehicle using the MailHog web portal.";
