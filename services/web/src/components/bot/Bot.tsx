@@ -247,9 +247,13 @@ const ChatBotComponent: React.FC<ChatBotComponentProps> = (props) => {
           }
         } catch (err) {
           console.error("Error checking initialization:", err);
-          await params.injectMessage(
-            "Unable to check initialization status. Please choose an option:",
-          );
+          await params
+            .injectMessage(
+              "Unable to check initialization status. Please choose an option:",
+            )
+            .catch((e: unknown) =>
+              console.error("Error injecting error message:", e),
+            );
           return "show_options";
         }
       },
@@ -264,26 +268,29 @@ const ChatBotComponent: React.FC<ChatBotComponentProps> = (props) => {
       transition: { duration: 0 },
       chatDisabled: true,
       path: async (params: Params) => {
-        switch (params.userInput) {
-          case "Initialize":
-            await params.injectMessage(
-              "Please type your OpenAI API key below and enter 'Submit' in the chat to initialize the chatbot.",
-            );
-            return "initialize";
-          case "Clear":
-            await params.injectMessage("Clearing the chat history...");
-            const cleared = await clearChatHistory();
-            if (cleared) {
-              await params.injectMessage("Chat history cleared successfully!");
-              setChatbotState((prev) => ({ ...prev, messages: [] }));
-            } else {
+        try {
+          switch (params.userInput) {
+            case "Initialize":
               await params.injectMessage(
-                "Failed to clear chat history. Please try again.",
+                "Please type your OpenAI API key below and enter 'Submit' in the chat to initialize the chatbot.",
               );
-            }
-            return "show_options";
-          case "Help":
-            await params.injectMessage(`**crAPI Chatbot Help**
+              return "initialize";
+            case "Clear":
+              await params.injectMessage("Clearing the chat history...");
+              const cleared = await clearChatHistory();
+              if (cleared) {
+                await params.injectMessage(
+                  "Chat history cleared successfully!",
+                );
+                setChatbotState((prev) => ({ ...prev, messages: [] }));
+              } else {
+                await params.injectMessage(
+                  "Failed to clear chat history. Please try again.",
+                );
+              }
+              return "show_options";
+            case "Help":
+              await params.injectMessage(`**crAPI Chatbot Help**
 
 **Available Commands:**
 - **Initialize**: Set up the chatbot with your OpenAI API key
@@ -296,12 +303,23 @@ const ChatBotComponent: React.FC<ChatBotComponentProps> = (props) => {
 3. Use the Clear option to reset your chat history
 
 What would you like to do next?`);
-            return "show_options";
-          default:
-            await params.injectMessage(
-              "Invalid option. Please choose from the available options.",
+              return "show_options";
+            default:
+              await params.injectMessage(
+                "Invalid option. Please choose from the available options.",
+              );
+              return "show_options";
+          }
+        } catch (err) {
+          console.error("Error processing option:", err);
+          await params
+            .injectMessage(
+              "An error occurred while processing your selection. Please try again.",
+            )
+            .catch((e: unknown) =>
+              console.error("Error injecting error message:", e),
             );
-            return "show_options";
+          return "show_options";
         }
       },
       renderMarkdown: ["BOT"],
@@ -315,43 +333,55 @@ What would you like to do next?`);
         />
       ),
       path: async (params: Params) => {
-        const APIKey = apiKey.trim();
-        if (!APIKey) {
-          await params.injectMessage(
-            "API key cannot be empty. Please enter a valid OpenAI API key and enter 'Submit' in the chat.",
-          );
-          return "initialize";
-        }
-        if (params.userInput.toLowerCase() !== "submit") {
-          await params.injectMessage(
-            "Please type 'Submit' to confirm your API key.",
-          );
-          return;
-        }
-        const success = await handleInitialization(APIKey);
-        if (success) {
-          // Fetch chat history after successful initialization
-          const chatHistory = await fetchChatHistory();
-          setChatbotState((prev) => ({
-            ...prev,
-            messages: chatHistory,
-            initializationRequired: false,
-          }));
-
-          if (chatHistory.length > 0) {
-            await params.simulateStreamMessage(
-              `✅ Chatbot initialized successfully! Loaded ${chatHistory.length} previous messages. You can now start chatting!`,
+        try {
+          const APIKey = apiKey.trim();
+          if (!APIKey) {
+            await params.injectMessage(
+              "API key cannot be empty. Please enter a valid OpenAI API key and enter 'Submit' in the chat.",
             );
+            return "initialize";
+          }
+          if (params.userInput.toLowerCase() !== "submit") {
+            await params.injectMessage(
+              "Please type 'Submit' to confirm your API key.",
+            );
+            return;
+          }
+          const success = await handleInitialization(APIKey);
+          if (success) {
+            // Fetch chat history after successful initialization
+            const chatHistory = await fetchChatHistory();
+            setChatbotState((prev) => ({
+              ...prev,
+              messages: chatHistory,
+              initializationRequired: false,
+            }));
+
+            if (chatHistory.length > 0) {
+              await params.simulateStreamMessage(
+                `✅ Chatbot initialized successfully! Loaded ${chatHistory.length} previous messages. You can now start chatting!`,
+              );
+            } else {
+              await params.injectMessage(
+                "✅ Chatbot initialized successfully! Ready to chat! Ask me anything about crAPI.",
+              );
+            }
+            return "chat";
           } else {
             await params.injectMessage(
-              "✅ Chatbot initialized successfully! Ready to chat! Ask me anything about crAPI.",
+              "❌ Failed to initialize chatbot. Please check your API key and try again:",
             );
+            return "show_options";
           }
-          return "chat";
-        } else {
-          await params.injectMessage(
-            "❌ Failed to initialize chatbot. Please check your API key and try again:",
-          );
+        } catch (err) {
+          console.error("Error during initialization flow:", err);
+          await params
+            .injectMessage(
+              "An error occurred during initialization. Please try again.",
+            )
+            .catch((e: unknown) =>
+              console.error("Error injecting error message:", e),
+            );
           return "show_options";
         }
       },
@@ -359,8 +389,19 @@ What would you like to do next?`);
     },
     chat: {
       function: async (params: Params) => {
-        const response = await handleUserMessage(params.userInput);
-        await params.injectMessage(response);
+        try {
+          const response = await handleUserMessage(params.userInput);
+          await params.injectMessage(response);
+        } catch (err) {
+          console.error("Error processing chat message:", err);
+          await params
+            .injectMessage(
+              "Sorry, something went wrong. Please try again.",
+            )
+            .catch((e: unknown) =>
+              console.error("Error injecting error message:", e),
+            );
+        }
       },
       renderMarkdown: ["BOT"],
       path: "chat",
@@ -424,32 +465,47 @@ What would you like to do next?`);
             <button
               className="delete-chat-btn"
               onClick={async () => {
-                // throw a beautiful popup to confirm the action
-                const { confirm } = await import("antd").then(({ Modal }) => ({
-                  confirm: Modal.confirm,
-                }));
+                try {
+                  // throw a beautiful popup to confirm the action
+                  const { confirm } = await import("antd").then(
+                    ({ Modal }) => ({
+                      confirm: Modal.confirm,
+                    }),
+                  );
 
-                confirm({
-                  title:
-                    "Are you sure you want to clear the chat history from crAPI servers?",
-                  content: "This action cannot be undone.",
-                  onOk: async () => {
-                    // Clear UI immediately by forcing re-render
-                    setChatResetKey((prev) => prev + 1);
+                  confirm({
+                    title:
+                      "Are you sure you want to clear the chat history from crAPI servers?",
+                    content: "This action cannot be undone.",
+                    onOk: async () => {
+                      try {
+                        // Clear UI immediately by forcing re-render
+                        setChatResetKey((prev) => prev + 1);
 
-                    // Clear local storage for chat history
-                    const storageKey = `react_chatbot_history_${chatbotState.initializationRequired ? "pending" : "active"}`;
-                    localStorage.removeItem(storageKey);
+                        // Clear local storage for chat history
+                        const storageKey = `react_chatbot_history_${chatbotState.initializationRequired ? "pending" : "active"}`;
+                        localStorage.removeItem(storageKey);
 
-                    // Also clear backend history
-                    const success = await clearChatHistory();
-                    if (!success) {
-                      // If backend clear failed, show error but keep UI cleared
-                      console.error("Failed to clear backend chat history");
-                    }
-                  },
-                  onCancel: () => {},
-                });
+                        // Also clear backend history
+                        const success = await clearChatHistory();
+                        if (!success) {
+                          // If backend clear failed, show error but keep UI cleared
+                          console.error(
+                            "Failed to clear backend chat history",
+                          );
+                        }
+                      } catch (err) {
+                        console.error("Error clearing chat history:", err);
+                      }
+                    },
+                    onCancel: () => {},
+                  });
+                } catch (err) {
+                  console.error(
+                    "Error opening clear history confirmation:",
+                    err,
+                  );
+                }
               }}
               aria-label="Clear Chat History"
               title="Clear Chat History"
