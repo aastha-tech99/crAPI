@@ -44,7 +44,10 @@ func identityServiceHealthCheck() {
 		log.Fatal("IDENTITY_SERVICE is not set")
 	}
 	var attempts = 0
-	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{
+		MinVersion:         tls.VersionTLS12,
+		InsecureSkipVerify: os.Getenv("TLS_SKIP_VERIFY") == "true",
+	}
 	for (attempts <= 5) {
 		tlsEnabled := os.Getenv("TLS_ENABLED")
 		identityHealthCheckUrl := fmt.Sprintf("http://%s/identity/health_check", os.Getenv("IDENTITY_SERVICE"))
