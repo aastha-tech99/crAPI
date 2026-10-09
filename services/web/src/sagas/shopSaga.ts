@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import { put, takeLatest } from "redux-saga/effects";
+import { put, takeLatest, select } from "redux-saga/effects";
 import { APIService, requestURLS } from "../constants/APIConstant";
 import MyAction from "../types/action";
 import actionTypes from "../constants/actionTypes";
@@ -29,6 +29,7 @@ import {
   COUPON_APPLIED,
   COUPON_NOT_APPLIED,
   COUPON_NOT_CREATED,
+  COUPON_ALREADY_APPLIED,
   NEW_PRODUCT_ADDED,
   PRODUCT_NOT_ADDED,
 } from "../constants/messages";
@@ -307,6 +308,16 @@ export function* returnOrder(action: MyAction): Generator<any, void, any> {
 export function* applyCoupon(action: MyAction): Generator<any, void, any> {
   const { accessToken, couponCode, callback } = action.payload;
   let recievedResponse: ReceivedResponse = {} as ReceivedResponse;
+
+  const appliedCoupons: string[] = yield select(
+    (state: { shopReducer: { appliedCoupons: string[] } }) =>
+      state.shopReducer.appliedCoupons,
+  );
+  if (appliedCoupons.includes(couponCode)) {
+    callback(responseTypes.FAILURE, COUPON_ALREADY_APPLIED);
+    return;
+  }
+
   try {
     yield put({ type: actionTypes.FETCHING_DATA });
     let postUrl = APIService.COMMUNITY_SERVICE + requestURLS.VALIDATE_COUPON;
@@ -353,6 +364,10 @@ export function* applyCoupon(action: MyAction): Generator<any, void, any> {
         yield put({
           type: actionTypes.BALANCE_CHANGED,
           payload: { availableCredit: responseJson.credit },
+        });
+        yield put({
+          type: actionTypes.COUPON_APPLIED,
+          payload: { couponCode },
         });
         callback(responseTypes.SUCCESS, COUPON_APPLIED);
       } else {

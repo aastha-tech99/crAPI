@@ -28,7 +28,11 @@ import {
 import Shop from "../../components/shop/shop";
 import { useNavigate } from "react-router-dom";
 import responseTypes from "../../constants/responseTypes";
-import { FAILURE_MESSAGE, SUCCESS_MESSAGE } from "../../constants/messages";
+import {
+  FAILURE_MESSAGE,
+  SUCCESS_MESSAGE,
+  COUPON_ALREADY_APPLIED,
+} from "../../constants/messages";
 
 const ShopContainer = (props) => {
   const { accessToken, getProducts, buyProduct } = props;
@@ -89,6 +93,15 @@ const ShopContainer = (props) => {
   };
 
   const handleFormFinish = (values) => {
+    if (
+      props.appliedCoupons &&
+      props.appliedCoupons.includes(values.couponCode)
+    ) {
+      setHasErrored(true);
+      setErrorMessage(COUPON_ALREADY_APPLIED);
+      return;
+    }
+
     const callback = (res, data) => {
       if (res === responseTypes.SUCCESS) {
         setIsCouponFormOpen(false);
@@ -175,8 +188,9 @@ const ShopContainer = (props) => {
 
 const mapStateToProps = ({
   userReducer: { accessToken, prevOffset, nextOffset },
+  shopReducer: { appliedCoupons },
 }) => {
-  return { accessToken, prevOffset, nextOffset };
+  return { accessToken, prevOffset, nextOffset, appliedCoupons };
 };
 
 const mapDispatchToProps = {
