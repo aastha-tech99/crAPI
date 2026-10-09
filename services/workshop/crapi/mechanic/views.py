@@ -392,18 +392,19 @@ class DownloadReportView(APIView):
 
         filename_from_user = unquote(filename_from_user)
         full_path = os.path.abspath(os.path.join(settings.BASE_DIR, "reports",  filename_from_user))
-        if os.path.exists(full_path) and os.path.isfile(full_path):
-            return FileResponse(open(full_path, 'rb'))
-        elif not os.path.exists(full_path):
+        try:
+            f = open(full_path, 'rb')
+        except FileNotFoundError:
             return Response(
                 {"message": f"File not found at '{full_path}'."},
                 status=status.HTTP_404_NOT_FOUND
             )
-        else:
+        except (IsADirectoryError, PermissionError):
             return Response(
                 {"message": f"'{full_path}' is not a file."},
                 status=status.HTTP_403_FORBIDDEN
             )
+        return FileResponse(f)
 
 def validate_filename(input: str) -> bool:
     """
