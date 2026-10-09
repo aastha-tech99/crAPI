@@ -170,8 +170,7 @@
                       "enum": [
                         "ROLE_UNDEFINED",
                         "ROLE_USER",
-                        "ROLE_MECHANIC",
-                        "ROLE_ADMIN"
+                        "ROLE_MECHANIC"
                       ]
                     }
                   }
@@ -587,8 +586,7 @@
                       "enum": [
                         "ROLE_UNDEFINED",
                         "ROLE_USER",
-                        "ROLE_MECHANIC",
-                        "ROLE_ADMIN"
+                        "ROLE_MECHANIC"
                       ]
                     }
                   }
@@ -5016,8 +5014,7 @@
             "enum": [
               "ROLE_UNDEFINED",
               "ROLE_USER",
-              "ROLE_MECHANIC",
-              "ROLE_ADMIN"
+              "ROLE_MECHANIC"
             ]
           }
         }
