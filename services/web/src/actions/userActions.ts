@@ -119,7 +119,7 @@ export const logOutUserAction = ({ callback }: ActionPayload) => {
 export const validateAccessTokenAction = ({
   accessToken,
 }: AccessTokenPayload) => {
-  console.log("validateAccessTokenAction action");
+  console.log("validateAccessTokenAction invoked");
   return {
     type: actionTypes.VALIDATE_ACCESS_TOKEN,
     payload: { accessToken },
