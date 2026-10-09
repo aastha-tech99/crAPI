@@ -53,6 +53,8 @@ export const POST_TITLE_REQUIRED: string = "Please enter title for post!";
 export const POST_DESC_REQUIRED: string = "Please enter description for Post!";
 export const COMMENT_REQUIRED: string = "Please enter a comment!";
 export const COUPON_CODE_REQUIRED: string = "Please enter a coupon code!";
+export const COUPON_ALREADY_USED: string =
+  "This coupon code has already been used.";
 export const PRODUCT_DETAILS_REQUIRED: string =
   "Please enter all product details!";
 export const COUPON_AMOUNT_REQUIRED: string = "Please enter a coupon amount!";

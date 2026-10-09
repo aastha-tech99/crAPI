@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import { put, takeLatest } from "redux-saga/effects";
+import { put, takeLatest, select } from "redux-saga/effects";
 import { APIService, requestURLS } from "../constants/APIConstant";
 import MyAction from "../types/action";
 import actionTypes from "../constants/actionTypes";
@@ -27,6 +27,7 @@ import {
   ORDER_NOT_RETURNED,
   INVALID_COUPON_CODE,
   COUPON_APPLIED,
+  COUPON_ALREADY_USED,
   COUPON_NOT_APPLIED,
   COUPON_NOT_CREATED,
   INVALID_COUPON_AMOUNT,
@@ -309,6 +310,14 @@ export function* applyCoupon(action: MyAction): Generator<any, void, any> {
   const { accessToken, couponCode, callback } = action.payload;
   let recievedResponse: ReceivedResponse = {} as ReceivedResponse;
   try {
+    const usedCoupons: string[] = yield select(
+      (state: any) => state.shopReducer.usedCoupons,
+    );
+    if (usedCoupons.includes(couponCode)) {
+      callback(responseTypes.FAILURE, COUPON_ALREADY_USED);
+      return;
+    }
+
     yield put({ type: actionTypes.FETCHING_DATA });
     let postUrl = APIService.COMMUNITY_SERVICE + requestURLS.VALIDATE_COUPON;
     const headers = {
@@ -351,6 +360,10 @@ export function* applyCoupon(action: MyAction): Generator<any, void, any> {
 
       yield put({ type: actionTypes.FETCHED_DATA, payload: recievedResponse });
       if (recievedResponse.ok) {
+        yield put({
+          type: actionTypes.COUPON_USED,
+          payload: { couponCode },
+        });
         yield put({
           type: actionTypes.BALANCE_CHANGED,
           payload: { availableCredit: responseJson.credit },

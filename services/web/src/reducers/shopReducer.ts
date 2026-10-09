@@ -35,6 +35,7 @@ interface ShopState {
   nextOffset: string | null;
   order?: Order;
   purchaseInFlight: boolean;
+  usedCoupons: string[];
 }
 
 const initialData: ShopState = {
@@ -44,6 +45,7 @@ const initialData: ShopState = {
   prevOffset: null,
   nextOffset: null,
   purchaseInFlight: false,
+  usedCoupons: [],
 };
 
 const shopReducer = (
@@ -85,6 +87,13 @@ const shopReducer = (
         pastOrders: state.pastOrders.map((order) =>
           order.id === maction.payload.orderId ? maction.payload.order : order,
         ),
+      };
+    case actionTypes.COUPON_USED:
+      return {
+        ...state,
+        usedCoupons: state.usedCoupons.includes(maction.payload.couponCode)
+          ? state.usedCoupons
+          : [...state.usedCoupons, maction.payload.couponCode],
       };
     case actionTypes.PURCHASE_IN_FLIGHT:
       return {
