@@ -101,6 +101,8 @@ MIDDLEWARE = [
 
 CORS_ORIGIN_ALLOW_ALL = True
 
+X_FRAME_OPTIONS = "DENY"
+
 ROOT_URLCONF = "crapi_site.urls"
 
 TEST_RUNNER = "xmlrunner.extra.djangotestrunner.XMLTestRunner"
