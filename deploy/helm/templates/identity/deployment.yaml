@@ -53,10 +53,8 @@ spec:
           envFrom:
               - configMapRef:
                   name: {{ .Values.identity.config.name }}
-          {{- if .Values.identity.resources }}
           resources:
             {{- toYaml .Values.identity.resources | nindent 12 }}
-          {{- end }}
           readinessProbe:
             tcpSocket:
               port: {{ .Values.identity.port }}

@@ -28,10 +28,8 @@ spec:
           ports:
             - containerPort: 443
             - containerPort: 80
-          {{- if .Values.web.resources }}
           resources:
             {{- toYaml .Values.web.resources | nindent 12 }}
-          {{- end }}
           envFrom:
             - configMapRef:
                 name: {{ .Values.web.config.name }}

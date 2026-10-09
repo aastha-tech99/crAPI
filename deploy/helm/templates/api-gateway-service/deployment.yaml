@@ -30,10 +30,8 @@ spec:
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           ports:
             - containerPort: {{ .Values.apiGatewayService.port }}
-          {{- if .Values.apiGatewayService.resources }}
           resources:
             {{- toYaml .Values.apiGatewayService.resources | nindent 12 }}
-          {{- end }}
           readinessProbe:
             tcpSocket:
               port: {{ .Values.apiGatewayService.port }}

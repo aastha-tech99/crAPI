@@ -58,10 +58,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ .Values.chatbot.config.name }}
-          {{- if .Values.chatbot.resources }}
           resources:
             {{- toYaml .Values.chatbot.resources | nindent 12 }}
-          {{- end }}
           readinessProbe:
             tcpSocket:
               port: {{ .Values.chatbot.port }}

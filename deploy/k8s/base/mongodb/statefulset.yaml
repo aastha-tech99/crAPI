@@ -17,6 +17,13 @@ spec:
         - name: mongodb
           image: mongo:4.4
           imagePullPolicy: "IfNotPresent"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
           envFrom:
             - configMapRef:
                 name: mongodb-config

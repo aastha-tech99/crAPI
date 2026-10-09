@@ -25,6 +25,8 @@ spec:
           imagePullPolicy: {{ .Values.chromadb.imagePullPolicy }}
           ports:
             - containerPort: {{ .Values.chromadb.port }}
+          resources:
+            {{- toYaml .Values.chromadb.resources | nindent 12 }}
           envFrom:
             - configMapRef:
                 name: {{ .Values.chromadb.config.name }}

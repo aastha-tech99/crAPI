@@ -25,6 +25,8 @@ spec:
           imagePullPolicy: {{ .Values.mongodb.imagePullPolicy }}
           ports:
             - containerPort: {{ .Values.mongodb.port }}
+          resources:
+            {{- toYaml .Values.mongodb.resources | nindent 12 }}
           envFrom:
             - configMapRef:
                 name: {{ .Values.mongodb.config.name }}

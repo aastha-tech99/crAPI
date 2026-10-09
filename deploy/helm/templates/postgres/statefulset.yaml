@@ -26,6 +26,8 @@ spec:
           args: ["-c", "max_connections=500"]
           ports:
             - containerPort: {{ .Values.postgresdb.port }}
+          resources:
+            {{- toYaml .Values.postgresdb.resources | nindent 12 }}
           envFrom:
             - configMapRef:
                 name: {{ .Values.postgresdb.config.name }}

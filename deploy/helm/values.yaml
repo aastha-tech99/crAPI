@@ -85,6 +85,13 @@ web:
     name: crapi-web-configmap
     labels:
       app: crapi-web
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
   deploymentLabels:
     app: crapi-web
   podLabels:
@@ -127,6 +134,13 @@ identity:
     keyStorePassword: passw0rd
     keyPassword: passw0rd
     keyAlias: identity
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
   deploymentLabels:
     app: crapi-identity
   podLabels:
@@ -157,6 +171,13 @@ community:
       app: crapi-community
     postgresDbDriver: postgres
     mongoDbDriver: mongodb
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
   deploymentLabels:
     app: crapi-community
   podLabels:
@@ -276,6 +297,13 @@ chatbot:
       resources:
         requests:
           storage: 1Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
   deploymentLabels:
     app: crapi-chatbot
   podLabels:
@@ -307,6 +335,13 @@ mailhog:
     labels:
       app: mailhog
     mailhogStorage: mongodb
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
   deploymentLabels:
     app: mailhog
   podLabels:
@@ -337,7 +372,14 @@ mongodb:
     mongoPassword: crapisecretpassword
     mongoDbName: crapi
     mongoUri: "admin:crapisecretpassword@mongodb:27017"
-  storage: 
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  storage:
     # type: "manual"
     # pv:
     #   name: mongodb-pv
@@ -381,6 +423,13 @@ postgresdb:
     postgresUser: admin
     postgresPassword: crapisecretpassword
     postgresDbName: crapi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
   storage:
     # type: "manual"
     # pv:
@@ -420,6 +469,13 @@ apiGatewayService:
     name: gateway-service
     labels:
       app: gateway-service
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
   deploymentLabels:
     app: gateway-service
   podLabels:
@@ -446,6 +502,13 @@ chromadb:
     labels:
       app: chromadb
     isPersistent: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
   storage:
     # type: "manual"
     # pv:
