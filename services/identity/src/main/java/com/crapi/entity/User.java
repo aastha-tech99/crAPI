@@ -15,6 +15,7 @@
 package com.crapi.entity;
 
 import com.crapi.enums.ERole;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import lombok.Data;
@@ -33,20 +34,22 @@ public class User {
   private Long id;
 
   private String email;
-  private String password;
+  @JsonIgnore private String password;
   private String number;
 
+  @JsonIgnore
   @Column(length = 500)
   private String jwtToken;
 
+  @JsonIgnore
   @Column(length = 1000)
   private String apiKey;
 
-  private LocalDate createdOn = LocalDate.now();
+  @JsonIgnore private LocalDate createdOn = LocalDate.now();
 
-  private LocalDate passwordUpdatedAt = LocalDate.of(2000, 1, 1);
+  @JsonIgnore private LocalDate passwordUpdatedAt = LocalDate.of(2000, 1, 1);
 
-  private String code;
+  @JsonIgnore private String code;
 
   // @OneToOne
   private ERole role;
