@@ -95,7 +95,11 @@ public class WebSecurityConfig {
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .exceptionHandling(handling -> handling.authenticationEntryPoint(jwtUnauthorizedHandler));
     http.authenticationProvider(authenticationProvider());
-    http.csrf().disable();
+    http.csrf(csrf -> csrf
+        .ignoringRequestMatchers(
+            "/identity/api/**",
+            "/identity/health_check",
+            "/identity/management/**"));
     http.cors(Customizer.withDefaults());
     return http.build();
   }
