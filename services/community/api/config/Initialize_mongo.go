@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -30,7 +31,11 @@ func (server *Server) InitializeMongo(DbDriver, DbUser string, DbPassword string
 		// Set client options
 		var err error
 
-		DBURL := fmt.Sprintf("mongodb://%s:%s@%s:%s", DbUser, DbPassword, DbHost, DbPort)
+		// Credential must be rotated — it was previously embedded in source and remains in git history.
+		DBURL := os.Getenv("MONGO_DB_URL")
+		if DBURL == "" {
+			DBURL = fmt.Sprintf("mongodb://%s:%s@%s:%s", DbUser, DbPassword, DbHost, DbPort)
+		}
 		clientOptions := options.Client().ApplyURI(DBURL)
 
 		server.Client, err = mongo.Connect(context.TODO(), clientOptions)
