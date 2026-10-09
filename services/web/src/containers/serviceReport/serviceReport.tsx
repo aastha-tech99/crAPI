@@ -88,7 +88,6 @@ const ServiceReportContainer: React.FC<PropsFromRedux> = ({
         });
       }
     };
-    console.log("getServiceReport", accessToken, reportId, callback);
     getServiceReport({ accessToken, reportId, callback });
   }, [accessToken, getServiceReport, reportId]);
 

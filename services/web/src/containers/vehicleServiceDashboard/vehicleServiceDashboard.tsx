@@ -76,7 +76,6 @@ const VehicleServiceDashboardContainer: React.FC<PropsFromRedux> = ({
         });
       }
     };
-    console.log("getVehicleServiceHistory", accessToken, VIN, callback);
     getVehicleServiceHistory({ accessToken, VIN, callback });
   }, [accessToken, getVehicleServiceHistory, VIN]);
 

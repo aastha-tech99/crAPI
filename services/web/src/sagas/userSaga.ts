@@ -47,7 +47,6 @@ interface Response {
 export function* validateAccessToken(
   action: MyAction,
 ): Generator<any, void, any> {
-  console.log("validateAccessToken invoked fn", action);
   const { accessToken } = action.payload;
   let receivedResponse: Partial<Response> = {};
   try {
@@ -72,7 +71,6 @@ export function* validateAccessToken(
       });
     }
   } catch (e) {
-    console.log("validateAccessToken error", e);
     yield put({ type: actionTypes.FETCHED_DATA, payload: null });
   }
 }
