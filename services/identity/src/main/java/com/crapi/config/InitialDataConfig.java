@@ -38,6 +38,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 @Component
@@ -68,6 +69,7 @@ public class InitialDataConfig {
 
   @Autowired PasswordEncoder encoder;
 
+  @Transactional
   public void createModels() {
     VehicleCompany vehicleCompany = new VehicleCompany("Hyundai");
     VehicleModel vehicleModel =
@@ -102,6 +104,7 @@ public class InitialDataConfig {
     vehicleModel = vehicleModelRepository.save(vehicleModel);
   }
 
+  @Transactional
   public void addVehicleModel() {
     if (CollectionUtils.isEmpty(vehicleModelRepository.findAll())) {
       createModels();
@@ -117,6 +120,7 @@ public class InitialDataConfig {
     addUser();
   }
 
+  @Transactional
   public void addUser() {
     if (CollectionUtils.isEmpty(userDetailsRepository.findAll()) || false) {
       ArrayList<SeedUser> userDetailList = new TestUsers().getUsers();
@@ -140,6 +144,7 @@ public class InitialDataConfig {
     }
   }
 
+  @Transactional
   public VehicleDetails createVehicle(
       String carId, String vin, String pincode, String latitude, String longitude) {
     List<VehicleModel> modelList = null;
@@ -159,6 +164,7 @@ public class InitialDataConfig {
     return null;
   }
 
+  @Transactional
   public boolean predefineUserData(
       String name,
       String email,

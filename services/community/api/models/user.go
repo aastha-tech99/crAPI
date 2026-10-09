@@ -15,20 +15,21 @@
 package models
 
 import (
+	"encoding/base64"
 	"errors"
 	"log"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/badoux/checkmail"
 	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
-
-	"encoding/base64"
 )
 
 
 
+var authorMu sync.Mutex
 var autherID uint64
 var nickname string
 var userEmail string
@@ -105,7 +106,6 @@ func FindAuthorByEmail(email string, db *gorm.DB) (*uint64, error) {
 	var name string
 	var picture []byte
 	var uuid string
-	userEmail = email
 
 	//fetch id and number from for token user
 	row := db.Table("user_login").Where("email LIKE ?", email).Select("id,number").Row()
@@ -115,22 +115,29 @@ func FindAuthorByEmail(email string, db *gorm.DB) (*uint64, error) {
 		log.Println("Error in FindAuthorByEmail", err)
 	}
 
-	autherID = id
 	//fetch name and picture from for token user
 	row1 := db.Table("user_details").Where("user_id = ?", id).Select("name, lo_get(picture)").Row()
 	err = row1.Scan(&name, &picture)
 	if err != nil {
 		log.Println("Error in FindAuthorByEmail", err)
 	}
+	var computedPicurl string
 	if len(picture) > 0 {
-		picurl = "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(picture)
+		computedPicurl = "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(picture)
 	}
-	nickname = name
 	row2 := db.Table("vehicle_details").Where("owner_id = ?", id).Select("uuid").Row()
 	err = row2.Scan(&uuid)
 	if err != nil {
 		log.Println("Error in FindAuthorByEmail", err)
 	}
+
+	authorMu.Lock()
+	userEmail = email
+	autherID = id
+	picurl = computedPicurl
+	nickname = name
 	vehicleID = uuid
+	authorMu.Unlock()
+
 	return number, err
 }

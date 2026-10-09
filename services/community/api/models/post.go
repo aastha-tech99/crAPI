@@ -74,12 +74,19 @@ func (post *Post) Validate() error {
 
 // Prepare initialize Field
 func Prepare() Author {
+	authorMu.Lock()
+	n := nickname
+	e := userEmail
+	v := vehicleID
+	p := picurl
+	authorMu.Unlock()
+
 	var u Author
-	u.Nickname = nickname
-	u.Email = userEmail
-	u.VehicleID = vehicleID
+	u.Nickname = n
+	u.Email = e
+	u.VehicleID = v
 	u.CreatedAt = time.Now()
-	u.Picurl = picurl
+	u.Picurl = p
 	return u
 }
 
