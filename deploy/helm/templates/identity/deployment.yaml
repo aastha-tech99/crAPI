@@ -54,7 +54,12 @@ spec:
               - configMapRef:
                   name: {{ .Values.identity.config.name }}
           resources:
-            {{- toYaml .Values.identity.resources | nindent 12 }}
+            limits:
+              cpu: {{ .Values.identity.resources.limits.cpu | default "500m" | quote }}
+              memory: {{ .Values.identity.resources.limits.memory | default "512Mi" | quote }}
+            requests:
+              cpu: {{ .Values.identity.resources.requests.cpu | default "100m" | quote }}
+              memory: {{ .Values.identity.resources.requests.memory | default "128Mi" | quote }}
           readinessProbe:
             tcpSocket:
               port: {{ .Values.identity.port }}

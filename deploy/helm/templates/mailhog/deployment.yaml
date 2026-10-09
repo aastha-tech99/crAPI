@@ -54,4 +54,9 @@ spec:
             - configMapRef:
                 name: {{ .Values.mailhog.config.name }}
           resources:
-            {{- toYaml .Values.mailhog.resources | nindent 12 }}
+            limits:
+              cpu: {{ .Values.mailhog.resources.limits.cpu | default "200m" | quote }}
+              memory: {{ .Values.mailhog.resources.limits.memory | default "256Mi" | quote }}
+            requests:
+              cpu: {{ .Values.mailhog.resources.requests.cpu | default "50m" | quote }}
+              memory: {{ .Values.mailhog.resources.requests.memory | default "64Mi" | quote }}

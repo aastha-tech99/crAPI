@@ -55,4 +55,9 @@ spec:
             - configMapRef:
                 name: {{ .Values.community.config.name }}
           resources:
-            {{- toYaml .Values.community.resources | nindent 12 }}
+            limits:
+              cpu: {{ .Values.community.resources.limits.cpu | default "500m" | quote }}
+              memory: {{ .Values.community.resources.limits.memory | default "512Mi" | quote }}
+            requests:
+              cpu: {{ .Values.community.resources.requests.cpu | default "100m" | quote }}
+              memory: {{ .Values.community.resources.requests.memory | default "128Mi" | quote }}

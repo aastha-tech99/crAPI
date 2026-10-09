@@ -48,7 +48,12 @@ spec:
             - configMapRef:
                 name: {{ .Values.workshop.config.name }}
           resources:
-            {{- toYaml .Values.workshop.resources | nindent 12 }}
+            limits:
+              cpu: {{ .Values.workshop.resources.limits.cpu | default "1000m" | quote }}
+              memory: {{ .Values.workshop.resources.limits.memory | default "512Mi" | quote }}
+            requests:
+              cpu: {{ .Values.workshop.resources.requests.cpu | default "500m" | quote }}
+              memory: {{ .Values.workshop.resources.requests.memory | default "256Mi" | quote }}
           readinessProbe:
             tcpSocket:
               port: {{ .Values.workshop.port }}

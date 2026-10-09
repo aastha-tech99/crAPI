@@ -29,7 +29,12 @@ spec:
             - containerPort: 443
             - containerPort: 80
           resources:
-            {{- toYaml .Values.web.resources | nindent 12 }}
+            limits:
+              cpu: {{ .Values.web.resources.limits.cpu | default "200m" | quote }}
+              memory: {{ .Values.web.resources.limits.memory | default "256Mi" | quote }}
+            requests:
+              cpu: {{ .Values.web.resources.requests.cpu | default "50m" | quote }}
+              memory: {{ .Values.web.resources.requests.memory | default "64Mi" | quote }}
           envFrom:
             - configMapRef:
                 name: {{ .Values.web.config.name }}

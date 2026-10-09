@@ -59,7 +59,12 @@ spec:
             - configMapRef:
                 name: {{ .Values.chatbot.config.name }}
           resources:
-            {{- toYaml .Values.chatbot.resources | nindent 12 }}
+            limits:
+              cpu: {{ .Values.chatbot.resources.limits.cpu | default "500m" | quote }}
+              memory: {{ .Values.chatbot.resources.limits.memory | default "512Mi" | quote }}
+            requests:
+              cpu: {{ .Values.chatbot.resources.requests.cpu | default "100m" | quote }}
+              memory: {{ .Values.chatbot.resources.requests.memory | default "128Mi" | quote }}
           readinessProbe:
             tcpSocket:
               port: {{ .Values.chatbot.port }}

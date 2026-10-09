@@ -31,7 +31,12 @@ spec:
           ports:
             - containerPort: {{ .Values.apiGatewayService.port }}
           resources:
-            {{- toYaml .Values.apiGatewayService.resources | nindent 12 }}
+            limits:
+              cpu: {{ .Values.apiGatewayService.resources.limits.cpu | default "500m" | quote }}
+              memory: {{ .Values.apiGatewayService.resources.limits.memory | default "512Mi" | quote }}
+            requests:
+              cpu: {{ .Values.apiGatewayService.resources.requests.cpu | default "100m" | quote }}
+              memory: {{ .Values.apiGatewayService.resources.requests.memory | default "128Mi" | quote }}
           readinessProbe:
             tcpSocket:
               port: {{ .Values.apiGatewayService.port }}
