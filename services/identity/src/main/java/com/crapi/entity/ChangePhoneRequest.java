@@ -2,6 +2,7 @@ package com.crapi.entity;
 
 import com.crapi.enums.EStatus;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 @Entity
@@ -13,9 +14,11 @@ public class ChangePhoneRequest {
   private long id;
 
   @Column(name = "new_phone")
+  @Pattern(regexp = "^\\+?[0-9]{1,15}$", message = "New phone must contain only digits")
   private String newPhone;
 
   @Column(name = "old_phone")
+  @Pattern(regexp = "^\\+?[0-9]{1,15}$", message = "Old phone must contain only digits")
   private String oldPhone;
 
   @Column(name = "otp")

@@ -34,6 +34,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import java.text.ParseException;
 import java.time.LocalDate;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.impl.Log4jContextFactory;
@@ -53,6 +54,18 @@ import org.springframework.stereotype.Service;
 public class UserServiceImpl implements UserService {
   static final Log4jContextFactory log4jContextFactory = new Log4jContextFactory();
   private static org.apache.logging.log4j.Logger LOG4J_LOGGER;
+
+  private static final Pattern EMAIL_PATTERN =
+      Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+  private static final Pattern PHONE_PATTERN = Pattern.compile("^\\+?[0-9]{1,15}$");
+
+  private static boolean isValidEmail(String email) {
+    return email != null && EMAIL_PATTERN.matcher(email).matches();
+  }
+
+  private static boolean isValidPhone(String phone) {
+    return phone != null && PHONE_PATTERN.matcher(phone).matches();
+  }
 
   @Autowired ChangeEmailRepository changeEmailRepository;
 
@@ -248,6 +261,13 @@ public class UserServiceImpl implements UserService {
     String token;
     User user;
     ChangeEmailRequest changeEmailRequest;
+    // Validate email format to prevent SSRF via crafted email addresses
+    if (!isValidEmail(changeEmailForm.getNew_email())) {
+      return new CRAPIResponse("Invalid new email format", 400);
+    }
+    if (!isValidEmail(changeEmailForm.getOld_email())) {
+      return new CRAPIResponse("Invalid old email format", 400);
+    }
     // Checking new email in user login table if it is already registered then not allowing that
     // email
     if (userRepository.existsByEmail(changeEmailForm.getNew_email())) {
@@ -515,6 +535,13 @@ public class UserServiceImpl implements UserService {
     String otp;
     User user;
     ChangePhoneRequest changePhoneRequest;
+    // Validate phone number format to prevent SSRF via crafted phone numbers
+    if (!isValidPhone(changePhoneForm.getNew_number())) {
+      return new CRAPIResponse("Invalid new phone number format", 400);
+    }
+    if (!isValidPhone(changePhoneForm.getOld_number())) {
+      return new CRAPIResponse("Invalid old phone number format", 400);
+    }
     // checking if new phone in user login table if present then disallow
     if (userRepository.existsByNumber(changePhoneForm.getNew_number())) {
       return new CRAPIResponse(

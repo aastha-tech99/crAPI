@@ -14,6 +14,7 @@
 
 package com.crapi.model;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -23,10 +24,12 @@ public class ChangeEmailForm {
 
   @NotBlank
   @Size(min = 3, max = 40)
+  @Email(message = "Old email must be a valid email address")
   private String old_email;
 
   @NotBlank
   @Size(min = 3, max = 40)
+  @Email(message = "New email must be a valid email address")
   private String new_email;
 
   private String token;

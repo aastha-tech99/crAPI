@@ -737,6 +737,24 @@ public class UserServiceImplTest {
     return changePhoneForm;
   }
 
+  @Test
+  public void changeEmailRequestRejectsInvalidEmailFormat() {
+    ChangeEmailForm changeEmailForm = getDummyChangeEmailForm();
+    changeEmailForm.setNew_email("not-an-email");
+    CRAPIResponse crapiAPIResponse =
+        userService.changeEmailRequest(getMockHttpRequest(), changeEmailForm);
+    Assertions.assertEquals(400, crapiAPIResponse.getStatus());
+  }
+
+  @Test
+  public void changePhoneRequestRejectsInvalidPhoneFormat() {
+    ChangePhoneForm changePhoneForm = getDummyChangePhoneForm();
+    changePhoneForm.setNew_number("http://evil.com");
+    CRAPIResponse crapiResponse =
+        userService.changePhoneRequest(getMockHttpRequest(), changePhoneForm);
+    Assertions.assertEquals(400, crapiResponse.getStatus());
+  }
+
   private ChangePhoneRequest getDummyChangePhoneRequest() {
     ChangePhoneRequest changePhoneRequest = new ChangePhoneRequest();
     changePhoneRequest.setOldPhone("12345678");

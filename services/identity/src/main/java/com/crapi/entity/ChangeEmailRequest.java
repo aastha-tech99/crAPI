@@ -16,6 +16,7 @@ package com.crapi.entity;
 
 import com.crapi.enums.EStatus;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import lombok.Data;
 
 @Entity
@@ -28,9 +29,11 @@ public class ChangeEmailRequest {
   private long id;
 
   @Column(name = "new_email")
+  @Email(message = "New email must be a valid email address")
   private String newEmail;
 
   @Column(name = "old_email")
+  @Email(message = "Old email must be a valid email address")
   private String oldEmail;
 
   @Column(name = "email_token")
