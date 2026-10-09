@@ -35,7 +35,7 @@ func (server *Server) InitializeMongo(DbDriver, DbUser string, DbPassword string
 		// assembling credentials in source code.
 		DBURL := os.Getenv("MONGO_DB_URL")
 		if DBURL == "" {
-			DBURL = fmt.Sprintf("mongodb://%s:%s@%s:%s", DbUser, DbPassword, DbHost, DbPort)
+			DBURL = fmt.Sprintf("mongodb://%s:%s", DbHost, DbPort)
 		}
 		clientOptions := options.Client().ApplyURI(DBURL)
 
