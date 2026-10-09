@@ -43,6 +43,9 @@ RUN pip install "setuptools>=70.0.0,<82"
 RUN pip install --no-index --find-links=/app/wheels -r requirements.txt
 COPY ./certs /app/certs
 COPY health.sh /app/health.sh
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup && \
+    chown -R appuser:appgroup /app
+USER appuser
 ARG SERVER_PORT
 EXPOSE ${SERVER_PORT}
 CMD ["/app/runner.sh"]

@@ -41,6 +41,12 @@ RUN mkdir -p /usr/share/nginx/html/debug && \
     chmod 666 /usr/share/nginx/html/debug/access.log && \
     chown -R nobody:nobody /usr/share/nginx/html/debug
 RUN echo "daemon off;" >> /usr/local/openresty/nginx/conf/nginx.conf
+RUN apk add --no-cache libcap && \
+    setcap 'cap_net_bind_service=+ep' /usr/local/openresty/nginx/sbin/nginx && \
+    addgroup -S appgroup && adduser -S appuser -G appgroup && \
+    chown -R appuser:appgroup /usr/local/openresty /etc/nginx /usr/share/nginx/html /app && \
+    mkdir -p /var/run/openresty && chown -R appuser:appgroup /var/run/openresty
+USER appuser
 EXPOSE 80
 EXPOSE 443
 

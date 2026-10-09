@@ -44,4 +44,7 @@ ENV JAVA_TOOL_OPTIONS="-Xmx128m"
 COPY jwks.json /app/default_jwks.json
 COPY entrypoint.sh /entrypoint.sh
 COPY health.sh /app/health.sh
+RUN groupadd -r appgroup && useradd -r -g appgroup -d /app -s /usr/sbin/nologin appuser && \
+    chown -R appuser:appgroup /app /entrypoint.sh
+USER appuser
 CMD [ "/entrypoint.sh"]

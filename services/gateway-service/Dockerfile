@@ -28,6 +28,13 @@ COPY --from=builder /app/server /app/server
 COPY --from=builder /app/public.crt /app/server.crt
 COPY --from=builder /app/private.key /app/server.key
 
+RUN apt-get update && apt-get install -y --no-install-recommends libcap2-bin && \
+    rm -rf /var/lib/apt/lists/* && \
+    setcap 'cap_net_bind_service=+ep' /app/server && \
+    groupadd -r appgroup && useradd -r -g appgroup -d /app -s /usr/sbin/nologin appuser && \
+    chown -R appuser:appgroup /app
+USER appuser
+
 EXPOSE 443
 
 CMD ["/app/server"]
