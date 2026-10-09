@@ -12,6 +12,9 @@ spec:
       labels:
         app: crapi-chatbot
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
       containers:
       - name: crapi-chatbot
         image: crapi/crapi-chatbot:latest

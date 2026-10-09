@@ -21,6 +21,9 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
       {{- if .Values.waitForK8sResources.enabled }}
       initContainers:
         - name: wait-for-postgres

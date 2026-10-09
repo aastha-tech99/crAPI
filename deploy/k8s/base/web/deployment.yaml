@@ -12,6 +12,9 @@ spec:
       labels:
         app: crapi-web
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
       containers:
       - name: crapi-web
         image: crapi/crapi-web:latest
