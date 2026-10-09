@@ -74,6 +74,9 @@ func (post *Post) Validate() error {
 
 // Prepare initialize Field
 func Prepare() Author {
+	authorMu.Lock()
+	defer authorMu.Unlock()
+
 	var u Author
 	u.Nickname = nickname
 	u.Email = userEmail

@@ -48,6 +48,9 @@ public class User {
 
   private String code;
 
+  @Version
+  private Long version;
+
   // @OneToOne
   private ERole role;
 

@@ -15,20 +15,19 @@
 package models
 
 import (
+	"encoding/base64"
 	"errors"
 	"log"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/badoux/checkmail"
 	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
-
-	"encoding/base64"
 )
 
-
-
+var authorMu sync.Mutex
 var autherID uint64
 var nickname string
 var userEmail string
@@ -99,6 +98,9 @@ func (u *Author) Validate(action string) error {
 
 //FindAuthorByEmail check user in database
 func FindAuthorByEmail(email string, db *gorm.DB) (*uint64, error) {
+	authorMu.Lock()
+	defer authorMu.Unlock()
+
 	var err error
 	var id uint64
 	var number *uint64

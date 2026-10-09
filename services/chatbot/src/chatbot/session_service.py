@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import uuid
 
@@ -9,6 +10,7 @@ from .extensions import db
 logger = logging.getLogger(__name__)
 
 SESSION_COOKIE_NAME = "chat_session_id"
+_session_lock = asyncio.Lock()
 
 
 async def get_or_create_session_id():
@@ -38,9 +40,10 @@ async def store_api_key(session_id, api_key, provider: str):
     key_field = _get_api_key_field(provider)
     if not key_field:
         return
-    await db.sessions.update_one(
-        {"session_id": session_id}, {"$set": {key_field: api_key}}, upsert=True
-    )
+    async with _session_lock:
+        await db.sessions.update_one(
+            {"session_id": session_id}, {"$set": {key_field: api_key}}, upsert=True
+        )
 
 
 async def get_api_key(session_id):

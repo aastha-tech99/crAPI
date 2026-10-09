@@ -38,6 +38,9 @@ public class ChangeEmailRequest {
 
   private String status;
 
+  @Version
+  private Long version;
+
   @OneToOne private User user;
 
   public ChangeEmailRequest() {}

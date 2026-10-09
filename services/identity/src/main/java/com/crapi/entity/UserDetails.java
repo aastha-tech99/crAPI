@@ -36,6 +36,9 @@ public class UserDetails {
   private double available_credit;
   @Lob private byte[] picture;
 
+  @Version
+  private Long version;
+
   @OneToOne private User user;
 
   public long getId() {
@@ -68,6 +71,14 @@ public class UserDetails {
 
   public void setAvailable_credit(double available_credit) {
     this.available_credit = available_credit;
+  }
+
+  public Long getVersion() {
+    return version;
+  }
+
+  public void setVersion(Long version) {
+    this.version = version;
   }
 
   @JsonIgnore

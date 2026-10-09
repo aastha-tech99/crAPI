@@ -30,6 +30,9 @@ public class Otp {
   private String status;
   private int count;
 
+  @Version
+  private Long version;
+
   @OneToOne private User user;
 
   public Otp() {}

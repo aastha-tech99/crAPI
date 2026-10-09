@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+import threading
 
 from quart import Blueprint, Quart, jsonify
 from quart_cors import cors
@@ -19,6 +20,7 @@ logging.basicConfig(
 logging.getLogger("chatbot").setLevel(logging.INFO)
 
 root_bp = Blueprint("root", __name__, url_prefix="/chatbot")
+_session_lock = threading.Lock()
 session_api_key_map = {}
 root_bp.register_blueprint(chat_bp)
 

@@ -93,6 +93,7 @@ public class OtpServiceImpl implements OtpService {
     throw new EntityNotFoundException(User.class, "userEmail", otpForm.getEmail());
   }
 
+  @Transactional
   @Override
   public CRAPIResponse secureValidateOtp(OtpForm otpForm) {
     CRAPIResponse crapiAPIResponse = null;

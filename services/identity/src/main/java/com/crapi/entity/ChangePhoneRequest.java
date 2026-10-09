@@ -23,6 +23,9 @@ public class ChangePhoneRequest {
 
   private String status;
 
+  @Version
+  private Long version;
+
   @OneToOne private User user;
 
   public ChangePhoneRequest() {}

@@ -7,7 +7,7 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @ConfigurationProperties("server.ssl")
 public class SSLConfig {
-  private Boolean enabled;
+  private volatile Boolean enabled;
 
   @AssertTrue
   boolean isEmabledValid() {

@@ -39,6 +39,10 @@ public class VehicleDetails {
   private String vin;
   private long year;
   private EStatus status;
+
+  @Version
+  private Long version;
+
   @Transient List<VehicleOwnership> previousOwners;
 
   @ManyToOne(cascade = CascadeType.ALL)

@@ -36,8 +36,9 @@ const TokenFormContainer = (props) => {
         onOk: () => {
           props.logOutUser({
             callback: () => {
+              localStorage.removeItem("token");
               localStorage.clear();
-              if (!localStorage.getItem("token")) navigate("/login");
+              navigate("/login");
             },
           });
         },

@@ -52,11 +52,11 @@ public class JwtProvider {
   @Value("${app.jwtExpiration}")
   private String jwtExpiration;
 
-  private KeyPair keyPair;
+  private volatile KeyPair keyPair;
 
-  private RSAKey publicRSAKey;
+  private volatile RSAKey publicRSAKey;
 
-  private Map<String, Object> publicJwkSet;
+  private volatile Map<String, Object> publicJwkSet;
 
   public JwtProvider(@Value("${app.jwksJson}") String jwksJson) {
     try {

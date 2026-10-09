@@ -31,6 +31,9 @@ public class ProfileVideo {
   private String conversion_params = "-v codec h264";
   @Lob private byte[] video;
 
+  @Version
+  private Long version;
+
   @OneToOne
   @JoinColumn(name = "user_id")
   private User user;
@@ -71,6 +74,14 @@ public class ProfileVideo {
 
   public void setConversion_params(String conversion_params) {
     this.conversion_params = conversion_params;
+  }
+
+  public Long getVersion() {
+    return version;
+  }
+
+  public void setVersion(Long version) {
+    this.version = version;
   }
 
   @JsonIgnore

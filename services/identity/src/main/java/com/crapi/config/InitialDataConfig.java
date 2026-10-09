@@ -29,6 +29,7 @@ import com.crapi.repository.*;
 import com.crapi.service.VehicleService;
 import com.crapi.utils.GenerateVIN;
 import com.crapi.utils.UserData;
+import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -102,6 +103,7 @@ public class InitialDataConfig {
     vehicleModel = vehicleModelRepository.save(vehicleModel);
   }
 
+  @Transactional
   public void addVehicleModel() {
     if (CollectionUtils.isEmpty(vehicleModelRepository.findAll())) {
       createModels();
@@ -159,6 +161,7 @@ public class InitialDataConfig {
     return null;
   }
 
+  @Transactional
   public boolean predefineUserData(
       String name,
       String email,

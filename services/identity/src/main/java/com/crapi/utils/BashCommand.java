@@ -29,7 +29,7 @@ public class BashCommand {
    * @param command
    * @return true if bash got started, but your command may have failed.
    */
-  public String executeBashCommand(String command) throws IOException {
+  public synchronized String executeBashCommand(String command) throws IOException {
     BufferedReader b = null;
     StringBuilder output;
     log.info("Executing BASH command:\n   ", command);
