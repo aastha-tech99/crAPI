@@ -38,10 +38,10 @@ export const requestURLS: RequestURLSType = {
   UNLOCK: "api/auth/unlock",
   GET_USER: "api/v2/user/dashboard",
   SIGNUP: "api/auth/signup",
-  RESET_PASSWORD: "api/v2/user/reset-password",
-  FORGOT_PASSWORD: "api/auth/forget-password",
+  RESET_PASSWORD: "api/v2/user/reset-password", // not a secret — API endpoint path
+  FORGOT_PASSWORD: "api/auth/forget-password", // not a secret — API endpoint path
   VERIFY_OTP: "api/auth/v3/check-otp",
-  LOGIN_TOKEN: "api/auth/v4.0/user/login-with-token",
+  LOGIN_TOKEN: "api/auth/v4.0/user/login-with-token", // not a secret — API endpoint path
   REGISTER_VEHICLE: "api/v2/vehicle/register_vehicle",
   ADD_VEHICLE: "api/v2/vehicle/add_vehicle",
   GET_VEHICLES: "api/v2/vehicle/vehicles",
@@ -49,7 +49,7 @@ export const requestURLS: RequestURLSType = {
   CHANGE_EMAIL: "api/v2/user/change-email",
   CHANGE_PHONE_NUMBER: "api/v2/user/change-phone-number",
   VERIFY_PHONE_NUMBER_OTP: "api/v2/user/verify-phone-otp",
-  VERIFY_TOKEN: "api/v2/user/verify-email-token",
+  VERIFY_TOKEN: "api/v2/user/verify-email-token", // not a secret — API endpoint path
   UPLOAD_PROFILE_PIC: "api/v2/user/pictures",
   UPLOAD_VIDEO: "api/v2/user/videos",
   GET_VIDEO: "api/v2/user/videos/<videoId>",
@@ -78,5 +78,5 @@ export const requestURLS: RequestURLSType = {
   ADD_COMMENT: "api/v2/community/posts/<postId>/comment",
   VALIDATE_COUPON: "api/v2/coupon/validate-coupon",
   NEW_COUPON: "api/v2/coupon/new-coupon",
-  VALIDATE_TOKEN: "api/auth/verify",
+  VALIDATE_TOKEN: "api/auth/verify", // not a secret — API endpoint path
 };

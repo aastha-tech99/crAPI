@@ -65,7 +65,8 @@ ALLOWED_HOSTS = ["*"]
 
 API_GATEWAY_URL = get_env_value("API_GATEWAY_URL")
 API_GATEWAY_USERNAME = "vendorcrapi"
-API_GATEWAY_PASSWORD = "Pa$$4Vendor_1"
+# IMPORTANT: This credential must be rotated — the previous value remains in git history
+API_GATEWAY_PASSWORD = get_env_value("API_GATEWAY_PASSWORD")
 
 # Application definition
 
