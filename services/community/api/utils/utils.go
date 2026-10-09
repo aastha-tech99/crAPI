@@ -15,6 +15,9 @@
 package utils
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+	"log"
 	"os"
 	"strings"
 )
@@ -36,4 +39,28 @@ func IsTLSEnabled() bool {
 		return true
 	}
 	return false
+}
+
+// SecureTLSConfig returns a TLS configuration with certificate verification
+// enabled. If the TLS_CA_CERT_FILE env var is set, the CA certificate at that
+// path is appended to the system certificate pool; otherwise the system pool
+// is used as-is.
+func SecureTLSConfig() *tls.Config {
+	rootCAs, err := x509.SystemCertPool()
+	if err != nil || rootCAs == nil {
+		rootCAs = x509.NewCertPool()
+	}
+
+	if caFile := os.Getenv("TLS_CA_CERT_FILE"); caFile != "" {
+		caCert, err := os.ReadFile(caFile)
+		if err != nil {
+			log.Printf("Warning: could not read CA cert file %s: %v", caFile, err)
+		} else {
+			rootCAs.AppendCertsFromPEM(caCert)
+		}
+	}
+
+	return &tls.Config{
+		RootCAs: rootCAs,
+	}
 }

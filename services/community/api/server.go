@@ -15,7 +15,6 @@
 package api
 
 import (
-	"crypto/tls"
 	"fmt"
 	"log"
 	"net/http"
@@ -25,6 +24,7 @@ import (
 	"crapi.proj/goservice/api/config"
 	"crapi.proj/goservice/api/router"
 	"crapi.proj/goservice/api/seed"
+	"crapi.proj/goservice/api/utils"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 )
@@ -44,7 +44,7 @@ func identityServiceHealthCheck() {
 		log.Fatal("IDENTITY_SERVICE is not set")
 	}
 	var attempts = 0
-	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = utils.SecureTLSConfig()
 	for (attempts <= 5) {
 		tlsEnabled := os.Getenv("TLS_ENABLED")
 		identityHealthCheckUrl := fmt.Sprintf("http://%s/identity/health_check", os.Getenv("IDENTITY_SERVICE"))
