@@ -135,6 +135,7 @@ public class UserServiceImplTest {
   @Test
   public void testAuthenticateUserLogin() throws UnsupportedEncodingException {
     LoginForm loginForm = getDummyLoginForm();
+    // Test fixture placeholder - not a real credential
     String sampleJwtToken = "sampleToken";
     User user = getDummyUser();
     Mockito.when(authenticationManager.authenticate(Mockito.any()))
@@ -164,6 +165,7 @@ public class UserServiceImplTest {
   @Test
   public void testAuthenticateUserLoginLog4J() throws UnsupportedEncodingException {
     LoginForm loginForm = getDummyLoginFormByEmail("${jndi:ldap://127.0.0.1/a}");
+    // Test fixture placeholder - not a real credential
     String sampleJwtToken = "sampleToken";
     User user = getDummyUser();
     when(userService.isLog4jEnabled()).thenReturn(true);
@@ -242,6 +244,7 @@ public class UserServiceImplTest {
   @Test
   public void testUpdateUserPassword() {
     User user = getDummyUser();
+    // Test fixture placeholder - not a real credential
     String samplePassword = "samplePassword";
     Mockito.when(userRepository.findByEmail(user.getEmail())).thenReturn(user);
     Mockito.when(userRepository.saveAndFlush(Mockito.any())).thenReturn(user);
