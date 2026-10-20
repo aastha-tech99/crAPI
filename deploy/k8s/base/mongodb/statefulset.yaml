@@ -20,6 +20,13 @@ spec:
           envFrom:
             - configMapRef:
                 name: mongodb-config
+          resources:
+            limits:
+              cpu: "1000m"
+              memory: 1Gi
+            requests:
+              cpu: 500m
+              memory: 512Mi
           volumeMounts:
             - mountPath: /data/db
               name: mongodb-data

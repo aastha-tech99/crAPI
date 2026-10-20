@@ -22,18 +22,39 @@ spec:
           args:
             - "service"
             - "postgresdb"
+          resources:
+            limits:
+              cpu: "50m"
+              memory: 64Mi
+            requests:
+              cpu: 25m
+              memory: 32Mi
         - name: wait-for-mongo
           image: groundnuty/k8s-wait-for:v1.3
           imagePullPolicy: Always
           args:
             - "service"
             - "mongodb"
+          resources:
+            limits:
+              cpu: "50m"
+              memory: 64Mi
+            requests:
+              cpu: 25m
+              memory: 32Mi
         - name: wait-for-identity
           image: groundnuty/k8s-wait-for:v1.3
           imagePullPolicy: Always
           args:
             - "service"
             - "crapi-identity"
+          resources:
+            limits:
+              cpu: "50m"
+              memory: 64Mi
+            requests:
+              cpu: 25m
+              memory: 32Mi
       containers:
       - name: crapi-community
         image: crapi/crapi-community:latest
@@ -46,5 +67,7 @@ spec:
         resources:
           limits:
             cpu: "500m"
+            memory: 512Mi
           requests:
-            cpu: 256m
+            cpu: 250m
+            memory: 256Mi

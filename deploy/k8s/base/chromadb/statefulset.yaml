@@ -24,6 +24,13 @@ spec:
           envFrom:
             - configMapRef:
                 name: chromadb-config
+          resources:
+            limits:
+              cpu: "1000m"
+              memory: 1Gi
+            requests:
+              cpu: 500m
+              memory: 512Mi
           volumeMounts:
             - mountPath: /data
               name: chromadb-data

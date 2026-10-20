@@ -22,6 +22,13 @@ spec:
           args:
             - "service"
             - "postgresdb"
+          resources:
+            limits:
+              cpu: "50m"
+              memory: 64Mi
+            requests:
+              cpu: 25m
+              memory: 32Mi
       volumes:
         - name: jwt-key-secret
           secret:
@@ -42,8 +49,10 @@ spec:
           resources:
             limits:
               cpu: "500m"
+              memory: 512Mi
             requests:
-              cpu: 256m
+              cpu: 250m
+              memory: 256Mi
           readinessProbe:
             tcpSocket:
               port: 8080

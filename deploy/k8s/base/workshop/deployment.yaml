@@ -22,12 +22,26 @@ spec:
           args:
             - "service"
             - "crapi-identity"
+          resources:
+            limits:
+              cpu: "50m"
+              memory: 64Mi
+            requests:
+              cpu: 25m
+              memory: 32Mi
         - name: wait-for-crapi-community
           image: groundnuty/k8s-wait-for:v1.3
           imagePullPolicy: Always
           args:
             - "service"
             - "crapi-community"
+          resources:
+            limits:
+              cpu: "50m"
+              memory: 64Mi
+            requests:
+              cpu: 25m
+              memory: 32Mi
       containers:
       - name: crapi-workshop
         image: crapi/crapi-workshop:latest
