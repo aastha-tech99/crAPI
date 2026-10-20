@@ -17,7 +17,7 @@ contains views related to Shop APIs
 """
 import logging
 import uuid
-from django.db import connection
+from django.db import connection, transaction
 from django.utils import timezone
 from django.http import FileResponse
 from django.urls import reverse
@@ -191,21 +191,25 @@ class OrderControlView(APIView):
             )
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         product = Product.objects.get(id=request_data["product_id"])
-        user_details = UserDetails.objects.get(user=user)
-        if user_details.available_credit < product.price:
-            return Response(
-                {"message": messages.INSUFFICIENT_BALANCE},
-                status=status.HTTP_400_BAD_REQUEST,
+
+        # Use atomic transaction with row-level locking to prevent race conditions
+        with transaction.atomic():
+            user_details = UserDetails.objects.select_for_update().get(user=user)
+            if user_details.available_credit < product.price:
+                return Response(
+                    {"message": messages.INSUFFICIENT_BALANCE},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            user_details.available_credit -= float(product.price * request_data["quantity"])
+            order = Order.objects.create(
+                user=user,
+                product=product,
+                quantity=request_data["quantity"],
+                created_on=timezone.now(),
+                transaction_id=uuid.uuid4(),
             )
-        user_details.available_credit -= float(product.price * request_data["quantity"])
-        order = Order.objects.create(
-            user=user,
-            product=product,
-            quantity=request_data["quantity"],
-            created_on=timezone.now(),
-            transaction_id=uuid.uuid4(),
-        )
-        user_details.save()
+            user_details.save()
+
         return Response(
             {
                 "id": order.id,
