@@ -29,6 +29,8 @@ import com.crapi.utils.MailBody;
 import com.crapi.utils.OTPGenerator;
 import com.crapi.utils.SMTPMailServer;
 import jakarta.transaction.Transactional;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -171,13 +173,27 @@ public class OtpServiceImpl implements OtpService {
    */
   public boolean validateOTPAndEmail(Otp otp, OtpForm otpForm) {
     if (otp != null) {
-      if (otp.getStatus().equalsIgnoreCase(EStatus.ACTIVE.toString())
-          && otp.getOtp().equalsIgnoreCase(otpForm.getOtp())
-          && otp.getUser().getEmail().equalsIgnoreCase(otpForm.getEmail())) {
+      boolean statusValid = otp.getStatus().equalsIgnoreCase(EStatus.ACTIVE.toString());
+      boolean otpValid = constantTimeEquals(otp.getOtp(), otpForm.getOtp());
+      boolean emailValid = otp.getUser().getEmail().equalsIgnoreCase(otpForm.getEmail());
+
+      if (statusValid && otpValid && emailValid) {
         return true;
       }
       return false;
     }
     throw new EntityNotFoundException(Otp.class, "OTP Details Not Found", otpForm.getEmail());
+  }
+
+  /**
+   * Constant-time string comparison to prevent timing attacks on sensitive data
+   */
+  private boolean constantTimeEquals(String a, String b) {
+    if (a == null || b == null) {
+      return a == b;
+    }
+    byte[] aBytes = a.toLowerCase().getBytes(StandardCharsets.UTF_8);
+    byte[] bBytes = b.toLowerCase().getBytes(StandardCharsets.UTF_8);
+    return MessageDigest.isEqual(aBytes, bBytes);
   }
 }

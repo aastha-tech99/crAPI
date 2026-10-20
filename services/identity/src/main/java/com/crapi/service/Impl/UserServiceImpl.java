@@ -32,6 +32,8 @@ import com.crapi.utils.SMTPMailServer;
 import io.jsonwebtoken.io.IOException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.text.ParseException;
 import java.time.LocalDate;
 import lombok.extern.slf4j.Slf4j;
@@ -409,6 +411,30 @@ public class UserServiceImpl implements UserService {
   }
 
   /**
+   * Constant-time string comparison to prevent timing attacks on sensitive data
+   */
+  private boolean constantTimeEquals(String a, String b) {
+    if (a == null || b == null) {
+      return a == b;
+    }
+    byte[] aBytes = a.getBytes(StandardCharsets.UTF_8);
+    byte[] bBytes = b.getBytes(StandardCharsets.UTF_8);
+    return MessageDigest.isEqual(aBytes, bBytes);
+  }
+
+  /**
+   * Constant-time case-insensitive string comparison to prevent timing attacks on sensitive data
+   */
+  private boolean constantTimeEqualsIgnoreCase(String a, String b) {
+    if (a == null || b == null) {
+      return a == b;
+    }
+    byte[] aBytes = a.toLowerCase().getBytes(StandardCharsets.UTF_8);
+    byte[] bBytes = b.toLowerCase().getBytes(StandardCharsets.UTF_8);
+    return MessageDigest.isEqual(aBytes, bBytes);
+  }
+
+  /**
    * @param lockAccountForm contains user email , which allow admin to lock the user account
    * @return success or failure of account lock
    */
@@ -444,7 +470,7 @@ public class UserServiceImpl implements UserService {
       String email = unlockAccountForm.getEmail();
       User user = userRepository.findByEmail(email);
       if (user != null) {
-        if (unlockAccountForm.getCode().equals(user.getCode())) {
+        if (constantTimeEquals(unlockAccountForm.getCode(), user.getCode())) {
           String jwt = jwtProvider.generateJwtToken(user);
           user.setCode("");
           user.setJwtToken(jwt);
@@ -567,7 +593,7 @@ public class UserServiceImpl implements UserService {
     changePhoneRequest = changePhoneRepository.findByUser(user);
     if (changePhoneRequest != null) {
       if (changePhoneForm.getOtp() != null
-          && changePhoneForm.getOtp().equalsIgnoreCase(changePhoneRequest.getOtp())) {
+          && constantTimeEqualsIgnoreCase(changePhoneForm.getOtp(), changePhoneRequest.getOtp())) {
         if (changePhoneForm.getOld_number().equalsIgnoreCase((user.getNumber()))) {
           if (changePhoneForm.getNew_number().equalsIgnoreCase(changePhoneRequest.getNewPhone())) {
             user.setNumber(changePhoneRequest.getNewPhone());
