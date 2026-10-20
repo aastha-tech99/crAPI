@@ -16,6 +16,7 @@ package com.crapi.entity;
 
 import com.crapi.enums.EStatus;
 import com.crapi.model.VehicleOwnership;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -49,6 +50,7 @@ public class VehicleDetails {
   @JoinColumn(name = "location_id")
   private VehicleLocation vehicleLocation;
 
+  @JsonIgnore
   @ManyToOne
   @JoinColumn(name = "owner_id")
   private User owner;
