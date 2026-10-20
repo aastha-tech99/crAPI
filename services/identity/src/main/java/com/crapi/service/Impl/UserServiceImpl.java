@@ -94,11 +94,10 @@ public class UserServiceImpl implements UserService {
         if (isLog4jEnabled()) {
           log.info("Log4j is enabled");
           log.info(
-              "Log4j Exploit Try With Email: {} with Logger: {}, Main Logger: {}",
-              loginForm.getEmail(),
+              "Log4j Exploit Try with Logger: {}, Main Logger: {}",
               LOG4J_LOGGER.getClass().getName(),
               log.getClass().getName());
-          LOG4J_LOGGER.error("Log4j Exploit Success With Email: {}", loginForm.getEmail());
+          LOG4J_LOGGER.error("Log4j Exploit Success detected");
         } else {
           log.info("Log4j is disabled");
         }
@@ -333,7 +332,7 @@ public class UserServiceImpl implements UserService {
       if (user != null) {
         return user;
       } else {
-        log.error("User not found with email: {}", username);
+        log.error("User not found");
         throw new EntityNotFoundException(User.class, "userEmail", username);
       }
     } catch (ParseException exception) {
@@ -477,7 +476,7 @@ public class UserServiceImpl implements UserService {
     if (authentication == null) {
       return new ApiKeyResponse(null, UserMessage.INVALID_CREDENTIALS);
     }
-    log.info("Generate Api Key for user: {}", loginForm.getEmail());
+    log.info("Generate Api Key for user");
     User user;
     if (request == null || jwtAuthTokenFilter.getToken(request) == null) {
       user = userRepository.findByEmail(loginForm.getEmail());
@@ -490,11 +489,11 @@ public class UserServiceImpl implements UserService {
     }
     // if apiKey is already generated
     if (user.getApiKey() != null) {
-      log.debug("Api Key already generated for user: {}", user.getEmail());
+      log.debug("Api Key already generated for user");
       return new ApiKeyResponse(user.getApiKey());
     }
     String apiKey = jwtProvider.generateApiKey(user);
-    log.debug("Api Key for user {}: {}", user.getEmail(), apiKey);
+    log.debug("Api Key generated for user");
     if (apiKey == null) {
       return new ApiKeyResponse(null, UserMessage.API_KEY_GENERATION_FAILED);
     }

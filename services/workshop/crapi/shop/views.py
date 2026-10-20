@@ -150,13 +150,13 @@ class OrderControlView(APIView):
                 )
                 if payment_response.status_code == 200:
                     payment = payment_response.json()
+                    logging.debug("payment response received successfully")
                 else:
                     logging.error(
-                        "Payment response error, {}: {}".format(
-                            payment_response.status_code, payment_response.content
+                        "Payment response error, status: {}".format(
+                            payment_response.status_code
                         )
                     )
-                logging.debug("payment response: {}".format(payment))
             except Exception as e:
                 logging.error(e, exc_info=True)
         except Exception as e:

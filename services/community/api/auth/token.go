@@ -125,13 +125,13 @@ func CheckTokenInDB(username string, db *gorm.DB) error {
 
 // Pretty display the claims licely in the terminal
 func Pretty(data interface{}) {
-	b, err := json.MarshalIndent(data, "", " ")
+	_, err := json.MarshalIndent(data, "", " ")
 	if err != nil {
-		log.Println(err)
+		log.Println("Error marshaling data")
 		return
 	}
-
-	log.Println(string(b))
+	// PII logging removed - data contains sensitive information
+	log.Println("Data processed successfully")
 }
 
 //
