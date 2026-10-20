@@ -315,16 +315,22 @@ export function* applyCoupon(action: MyAction): Generator<any, void, any> {
       yield put({ type: actionTypes.FETCHED_DATA, payload: recievedResponse });
       callback(responseTypes.FAILURE, INVALID_COUPON_CODE);
     } else {
+      const parsedAmount = parseFloat(CouponJson.amount);
+      if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        yield put({ type: actionTypes.FETCHED_DATA, payload: recievedResponse });
+        callback(responseTypes.FAILURE, "Invalid coupon amount");
+        return;
+      }
       postUrl = APIService.WORKSHOP_SERVICE + requestURLS.APPLY_COUPON;
       const responseJson = yield fetch(postUrl, {
         headers,
         method: "POST",
         body: JSON.stringify({
           coupon_code: CouponJson.coupon_code,
-          amount: parseFloat(CouponJson.amount),
+          amount: parsedAmount,
         }),
       }).then((response: Response) => {
-        recievedResponse = response as ReceivedResponse;
+        recievedResponse = response as RecievedResponse;
         return response.json();
       });
 
