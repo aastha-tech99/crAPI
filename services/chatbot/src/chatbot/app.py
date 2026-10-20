@@ -36,4 +36,4 @@ app.register_blueprint(root_bp)
 init_mongo()
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5555)
+    app.run(debug=Config.DEBUG, port=5555)

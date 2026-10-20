@@ -9,6 +9,7 @@ load_dotenv()
 
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "super-secret")
+    DEBUG = os.getenv("DEBUG", "false").lower() in ("true", "1", "yes")
     MONGO_URI = MONGO_CONNECTION_URI
     LLM_PROVIDER = os.getenv("CHATBOT_LLM_PROVIDER", "openai").lower()
     LLM_MODEL_NAME = os.getenv("CHATBOT_LLM_MODEL", "")
