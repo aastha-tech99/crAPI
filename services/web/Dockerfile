@@ -41,7 +41,11 @@ RUN mkdir -p /usr/share/nginx/html/debug && \
     chmod 666 /usr/share/nginx/html/debug/access.log && \
     chown -R nobody:nobody /usr/share/nginx/html/debug
 RUN echo "daemon off;" >> /usr/local/openresty/nginx/conf/nginx.conf
-EXPOSE 80
-EXPOSE 443
+RUN mkdir -p /var/run/openresty && \
+    mkdir -p /var/log/nginx && \
+    chown -R nobody:nobody /var/run/openresty /var/log/nginx /etc/nginx /usr/share/nginx
+EXPOSE 8080
+EXPOSE 8443
 
+USER nobody
 CMD [ "/etc/nginx/nginx-wrapper.sh" ]

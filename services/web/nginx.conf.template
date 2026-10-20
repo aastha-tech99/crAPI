@@ -5,7 +5,7 @@ log_format debug_log '$remote_addr - $remote_user [$time_local] '
                      'request_body: "$request_body"';
 
 server {
-  listen 443 ssl;
+  listen 8443 ssl;
   access_log /usr/share/nginx/html/debug/access.log debug_log;
   server_name _;
   ssl_certificate /app/certs/server.crt;
@@ -136,7 +136,7 @@ server {
 }
 
 server {
-  listen 80;
+  listen 8080;
   server_name _;
   access_log /usr/share/nginx/html/debug/access.log debug_log;
   client_max_body_size 50M;
