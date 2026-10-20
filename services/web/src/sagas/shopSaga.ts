@@ -105,7 +105,7 @@ export function* getProducts(action: MyAction): Generator<any, void, any> {
       callback(responseTypes.FAILURE, recievedResponse.message);
     }
   } catch (e) {
-    console.log(e);
+    console.error("getProducts error:", e instanceof Error ? e.message : "Unknown error");
     yield put({ type: actionTypes.FETCHED_DATA, payload: recievedResponse });
     callback(responseTypes.FAILURE, NO_PRODUCTS);
   }

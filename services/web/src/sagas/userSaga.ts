@@ -47,7 +47,6 @@ interface Response {
 export function* validateAccessToken(
   action: MyAction,
 ): Generator<any, void, any> {
-  console.log("validateAccessToken invoked fn", action);
   const { accessToken } = action.payload;
   let receivedResponse: Partial<Response> = {};
   try {
@@ -72,7 +71,7 @@ export function* validateAccessToken(
       });
     }
   } catch (e) {
-    console.log("validateAccessToken error", e);
+    console.error("validateAccessToken error:", e instanceof Error ? e.message : "Unknown error");
     yield put({ type: actionTypes.FETCHED_DATA, payload: null });
   }
 }
@@ -158,7 +157,6 @@ export function* logIn(action: MyAction): Generator<any, void, any> {
  * @payload {Function} payload.callback - Callback method
  */
 export function* unlock(action: MyAction): Generator<any, void, any> {
-  console.log("unlock action", action.payload);
   const { email, code, callback } = action.payload;
   let receivedResponse: Partial<Response> = {};
   try {
@@ -233,7 +231,6 @@ export function* signUp(action: MyAction): Generator<any, void, any> {
     };
     // remove special chars from number
     let cleanedNumber = number.replace(/[^0-9+]/g, "");
-    console.log("number", cleanedNumber);
     const responseJSON = yield fetch(postUrl, {
       headers,
       method: "POST",
