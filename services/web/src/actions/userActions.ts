@@ -76,7 +76,7 @@ export const logInUserAction = ({
 };
 
 export const unlockUserAction = ({ email, code, callback }: UnlockPayload) => {
-  console.log("unlockUserAction", email, code, callback);
+  console.log("unlockUserAction called");
   return {
     type: actionTypes.UNLOCK_USER,
     payload: { email, code, callback },
@@ -88,7 +88,7 @@ export const unlockRedirectUserAction = ({
   message,
   callback,
 }: UnlockRedirectPayload) => {
-  console.log("unlockRedirectUserAction", email, message, callback);
+  console.log("unlockRedirectUserAction called");
   return {
     type: actionTypes.UNLOCK_USER_REDIRECT,
     payload: { email, message, callback },
@@ -119,7 +119,7 @@ export const logOutUserAction = ({ callback }: ActionPayload) => {
 export const validateAccessTokenAction = ({
   accessToken,
 }: AccessTokenPayload) => {
-  console.log("validateAccessTokenAction action");
+  console.log("validateAccessTokenAction invoked");
   return {
     type: actionTypes.VALIDATE_ACCESS_TOKEN,
     payload: { accessToken },

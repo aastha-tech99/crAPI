@@ -102,7 +102,9 @@ const AfterLogin: React.FC<AfterLoginProps> = ({
   if (!isAccessTokenValid(accessToken || "")) {
     logOutUser({
       callback: () => {
+        // Clear all client-side storage to ensure full session rotation (CWE-384)
         localStorage.clear();
+        sessionStorage.clear();
       },
     });
     return <Navigate to="/login" />;

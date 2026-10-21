@@ -28,6 +28,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+// maxQueryLimit is the maximum number of records a single list query may return.
+const maxQueryLimit int64 = 100
+
 // Post Field
 type Post struct {
 	ID        string     `gorm:"primary_key;auto_increment" json:"id"`
@@ -115,6 +118,13 @@ func GetPostByID(client *mongo.Client, ID string) (Post, error) {
 func FindAllPost(client *mongo.Client, offset int64, limit int64) (PostsResponse, error) {
 	postList := []Post{}
 	postsResponse := PostsResponse{}
+	// Enforce maximum limit to prevent unbounded result sets (CWE-770)
+	if limit <= 0 || limit > maxQueryLimit {
+		limit = maxQueryLimit
+	}
+	if offset < 0 {
+		offset = 0
+	}
 	options := options.Find()
 	options.SetSort(bson.D{{Key: "_id", Value: -1}})
 	options.SetLimit(limit)
@@ -162,6 +172,13 @@ func FindAllPost(client *mongo.Client, offset int64, limit int64) (PostsResponse
 func FindPostsByTitle(client *mongo.Client, title string, offset int64, limit int64) (PostsResponse, error) {
 	postList := []Post{}
 	postsResponse := PostsResponse{}
+	// Enforce maximum limit to prevent unbounded result sets (CWE-770)
+	if limit <= 0 || limit > maxQueryLimit {
+		limit = maxQueryLimit
+	}
+	if offset < 0 {
+		offset = 0
+	}
 
 	options := options.Find()
 	options.SetSort(bson.D{{Key: "_id", Value: -1}})

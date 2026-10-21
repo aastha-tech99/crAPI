@@ -58,7 +58,12 @@ def jwt_auth_required(func):
                 )
                 response_status_code = token_verify_response.status_code
                 if response_status_code == status.HTTP_200_OK:
-                    decoded = jwt.decode(token, options={"verify_signature": False})
+                    decoded = jwt.decode(
+                        token,
+                        settings.SECRET_KEY,
+                        algorithms=["HS256"],
+                        options={"verify_signature": True},
+                    )
                     username = decoded["sub"]
                     user = User.objects.get(email=username)
                     # Add user object to the view function if authorized
@@ -77,7 +82,7 @@ def jwt_auth_required(func):
                 content_type="application/json",
             )
 
-        except (jwt.exceptions.DecodeError, User.DoesNotExist) as e:
+        except (jwt.exceptions.DecodeError, jwt.exceptions.InvalidAlgorithmError, User.DoesNotExist) as e:
             logger.debug(
                 f"JWT token verification failed with exception: {e}", exc_info=True
             )

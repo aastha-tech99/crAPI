@@ -57,15 +57,13 @@ IS_TESTING = os.environ.get("IS_TESTING", False)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
-DEBUG = os.environ.get("DEBUG", False)
-if LOG_LEVEL == "DEBUG":
-    DEBUG = True
+DEBUG = os.environ.get("DJANGO_DEBUG", "False").lower() in ("true", "1", "yes")
 
 ALLOWED_HOSTS = ["*"]
 
 API_GATEWAY_URL = get_env_value("API_GATEWAY_URL")
-API_GATEWAY_USERNAME = "vendorcrapi"
-API_GATEWAY_PASSWORD = "Pa$$4Vendor_1"
+API_GATEWAY_USERNAME = os.environ.get("API_GATEWAY_USERNAME", "vendorcrapi")
+API_GATEWAY_PASSWORD = get_env_value("API_GATEWAY_PASSWORD")  # Rotate: credential was exposed in git history
 
 # Application definition
 
@@ -88,6 +86,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "crapi_site.middleware.ContentSecurityPolicyMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -100,6 +99,20 @@ MIDDLEWARE = [
 ]
 
 CORS_ORIGIN_ALLOW_ALL = True
+
+# Clickjacking protection: DENY framing (complements CSP frame-ancestors 'none')
+X_FRAME_OPTIONS = "DENY"
+
+# Prevent MIME type sniffing; SecurityMiddleware sends X-Content-Type-Options: nosniff
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# HTTP Strict Transport Security (HSTS): force browsers to use HTTPS for 1 year
+SECURE_HSTS_SECONDS = 31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+
+# Redirect all HTTP requests to HTTPS when TLS is enabled in the deployment
+SECURE_SSL_REDIRECT = os.environ.get("TLS_ENABLED", "").lower() in ("true", "1", "yes")
 
 ROOT_URLCONF = "crapi_site.urls"
 

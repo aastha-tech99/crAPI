@@ -41,7 +41,21 @@ RUN mkdir -p /usr/share/nginx/html/debug && \
     chmod 666 /usr/share/nginx/html/debug/access.log && \
     chown -R nobody:nobody /usr/share/nginx/html/debug
 RUN echo "daemon off;" >> /usr/local/openresty/nginx/conf/nginx.conf
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser && \
+    chown -R appuser:appgroup /usr/share/nginx/html /app /etc/nginx/conf.d && \
+    mkdir -p /usr/local/openresty/nginx/logs /var/run/openresty \
+             /usr/local/openresty/nginx/client_body_temp \
+             /usr/local/openresty/nginx/proxy_temp \
+             /usr/local/openresty/nginx/fastcgi_temp \
+             /usr/local/openresty/nginx/uwsgi_temp \
+             /usr/local/openresty/nginx/scgi_temp && \
+    chown -R appuser:appgroup /usr/local/openresty/nginx/logs /var/run/openresty \
+             /usr/local/openresty/nginx/client_body_temp \
+             /usr/local/openresty/nginx/proxy_temp \
+             /usr/local/openresty/nginx/fastcgi_temp \
+             /usr/local/openresty/nginx/uwsgi_temp \
+             /usr/local/openresty/nginx/scgi_temp
 EXPOSE 80
 EXPOSE 443
-
+USER appuser
 CMD [ "/etc/nginx/nginx-wrapper.sh" ]

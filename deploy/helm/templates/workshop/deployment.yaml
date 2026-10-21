@@ -20,6 +20,9 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
       {{- if .Values.waitForK8sResources.enabled }}
       initContainers:
         - name: wait-for-crapi-identity
@@ -44,10 +47,17 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ .Values.workshop.config.name }}
-          {{- if .Values.workshop.resources }}
           resources:
+            {{- if .Values.workshop.resources }}
             {{- toYaml .Values.workshop.resources | nindent 12 }}
-          {{- end }}
+            {{- else }}
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            {{- end }}
           readinessProbe:
             tcpSocket:
               port: {{ .Values.workshop.port }}

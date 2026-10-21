@@ -34,6 +34,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import java.text.ParseException;
 import java.time.LocalDate;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.impl.Log4jContextFactory;
@@ -74,9 +75,22 @@ public class UserServiceImpl implements UserService {
 
   @Autowired ChangePhoneRepository changePhoneRepository;
 
+  private static final Pattern EMAIL_PATTERN =
+      Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
+
+  private static final Pattern PHONE_PATTERN = Pattern.compile("^\\+?[0-9]{1,15}$");
+
   public UserServiceImpl() {
     setFactory(log4jContextFactory);
     LOG4J_LOGGER = LogManager.getLogger(UserService.class);
+  }
+
+  private static boolean isValidEmail(String email) {
+    return email != null && EMAIL_PATTERN.matcher(email).matches();
+  }
+
+  private static boolean isValidPhone(String phone) {
+    return phone != null && PHONE_PATTERN.matcher(phone).matches();
   }
 
   @Transactional
@@ -248,6 +262,11 @@ public class UserServiceImpl implements UserService {
     String token;
     User user;
     ChangeEmailRequest changeEmailRequest;
+    // Validate email format before any server-side use
+    if (!isValidEmail(changeEmailForm.getNew_email())
+        || !isValidEmail(changeEmailForm.getOld_email())) {
+      return new CRAPIResponse(UserMessage.INVALID_CREDENTIALS, 400);
+    }
     // Checking new email in user login table if it is already registered then not allowing that
     // email
     if (userRepository.existsByEmail(changeEmailForm.getNew_email())) {
@@ -297,6 +316,10 @@ public class UserServiceImpl implements UserService {
       HttpServletRequest request, ChangeEmailForm changeEmailForm) {
     ChangeEmailRequest changeEmailRequest;
     User user;
+    // Validate email format before any server-side use
+    if (!isValidEmail(changeEmailForm.getNew_email())) {
+      return new CRAPIResponse(UserMessage.INVALID_CREDENTIALS, 400);
+    }
     changeEmailRequest = changeEmailRepository.findByEmailToken(changeEmailForm.getToken());
     user = getUserFromToken(request);
     if (changeEmailRequest != null) {
@@ -515,6 +538,11 @@ public class UserServiceImpl implements UserService {
     String otp;
     User user;
     ChangePhoneRequest changePhoneRequest;
+    // Validate phone format before any server-side use
+    if (!isValidPhone(changePhoneForm.getNew_number())
+        || !isValidPhone(changePhoneForm.getOld_number())) {
+      return new CRAPIResponse(UserMessage.INVALID_CREDENTIALS, 400);
+    }
     // checking if new phone in user login table if present then disallow
     if (userRepository.existsByNumber(changePhoneForm.getNew_number())) {
       return new CRAPIResponse(

@@ -79,6 +79,7 @@ public class UserDetails {
     this.picture = picture;
   }
 
+  @JsonIgnore
   public User getUser() {
     return user;
   }

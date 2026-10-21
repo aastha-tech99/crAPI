@@ -28,10 +28,14 @@ import {
 import Shop from "../../components/shop/shop";
 import { useNavigate } from "react-router-dom";
 import responseTypes from "../../constants/responseTypes";
-import { FAILURE_MESSAGE, SUCCESS_MESSAGE } from "../../constants/messages";
+import {
+  FAILURE_MESSAGE,
+  SUCCESS_MESSAGE,
+  COUPON_ALREADY_APPLIED,
+} from "../../constants/messages";
 
 const ShopContainer = (props) => {
-  const { accessToken, getProducts, buyProduct } = props;
+  const { accessToken, getProducts, buyProduct, appliedCoupons } = props;
   const navigate = useNavigate();
 
   const [hasErrored, setHasErrored] = React.useState(false);
@@ -89,6 +93,15 @@ const ShopContainer = (props) => {
   };
 
   const handleFormFinish = (values) => {
+    // Client-side usage limit: block re-applying the same coupon code
+    if (
+      values.couponCode &&
+      appliedCoupons.includes(values.couponCode)
+    ) {
+      setHasErrored(true);
+      setErrorMessage(COUPON_ALREADY_APPLIED);
+      return;
+    }
     const callback = (res, data) => {
       if (res === responseTypes.SUCCESS) {
         setIsCouponFormOpen(false);
@@ -175,8 +188,9 @@ const ShopContainer = (props) => {
 
 const mapStateToProps = ({
   userReducer: { accessToken, prevOffset, nextOffset },
+  shopReducer: { purchaseInProgress, appliedCoupons },
 }) => {
-  return { accessToken, prevOffset, nextOffset };
+  return { accessToken, prevOffset, nextOffset, purchaseInProgress, appliedCoupons };
 };
 
 const mapDispatchToProps = {
@@ -197,6 +211,8 @@ ShopContainer.propTypes = {
   nextOffset: PropTypes.number,
   prevOffset: PropTypes.number,
   onOffsetChange: PropTypes.func,
+  purchaseInProgress: PropTypes.bool,
+  appliedCoupons: PropTypes.arrayOf(PropTypes.string),
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(ShopContainer);

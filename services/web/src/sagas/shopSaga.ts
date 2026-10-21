@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import { put, takeLatest } from "redux-saga/effects";
+import { put, select, takeLatest } from "redux-saga/effects";
 import { APIService, requestURLS } from "../constants/APIConstant";
 import MyAction from "../types/action";
 import actionTypes from "../constants/actionTypes";
@@ -27,6 +27,8 @@ import {
   INVALID_COUPON_CODE,
   COUPON_APPLIED,
   COUPON_NOT_APPLIED,
+  COUPON_ALREADY_APPLIED,
+  INVALID_COUPON_AMOUNT,
   COUPON_NOT_CREATED,
   NEW_PRODUCT_ADDED,
   PRODUCT_NOT_ADDED,
@@ -120,8 +122,19 @@ export function* getProducts(action: MyAction): Generator<any, void, any> {
  */
 export function* buyProduct(action: MyAction): Generator<any, void, any> {
   const { accessToken, productId, callback } = action.payload;
+
+  // Prevent duplicate purchase submissions while a request is in flight
+  const purchaseInProgress: boolean = yield select(
+    (state: any) => state.shopReducer.purchaseInProgress,
+  );
+  if (purchaseInProgress) {
+    callback(responseTypes.FAILURE, PRODUCT_NOT_BOUGHT);
+    return;
+  }
+
   let recievedResponse: ReceivedResponse = {} as ReceivedResponse;
   try {
+    yield put({ type: actionTypes.BUY_PRODUCT_STARTED });
     yield put({ type: actionTypes.FETCHING_DATA });
     const postUrl = APIService.WORKSHOP_SERVICE + requestURLS.BUY_PRODUCT;
     const headers = {
@@ -138,6 +151,7 @@ export function* buyProduct(action: MyAction): Generator<any, void, any> {
     });
 
     yield put({ type: actionTypes.FETCHED_DATA, payload: recievedResponse });
+    yield put({ type: actionTypes.BUY_PRODUCT_FINISHED });
     if (recievedResponse.ok) {
       yield put({
         type: actionTypes.BALANCE_CHANGED,
@@ -149,6 +163,7 @@ export function* buyProduct(action: MyAction): Generator<any, void, any> {
     }
   } catch (e) {
     yield put({ type: actionTypes.FETCHED_DATA, payload: recievedResponse });
+    yield put({ type: actionTypes.BUY_PRODUCT_FINISHED });
     callback(responseTypes.FAILURE, PRODUCT_NOT_BOUGHT);
   }
 }
@@ -293,6 +308,16 @@ export function* returnOrder(action: MyAction): Generator<any, void, any> {
  */
 export function* applyCoupon(action: MyAction): Generator<any, void, any> {
   const { accessToken, couponCode, callback } = action.payload;
+
+  // Client-side usage limit: prevent re-applying the same coupon code
+  const appliedCoupons: string[] = yield select(
+    (state: any) => state.shopReducer.appliedCoupons,
+  );
+  if (appliedCoupons.includes(couponCode)) {
+    callback(responseTypes.FAILURE, COUPON_ALREADY_APPLIED);
+    return;
+  }
+
   let recievedResponse: ReceivedResponse = {} as ReceivedResponse;
   try {
     yield put({ type: actionTypes.FETCHING_DATA });
@@ -315,13 +340,20 @@ export function* applyCoupon(action: MyAction): Generator<any, void, any> {
       yield put({ type: actionTypes.FETCHED_DATA, payload: recievedResponse });
       callback(responseTypes.FAILURE, INVALID_COUPON_CODE);
     } else {
+      const parsedAmount = parseFloat(CouponJson.amount);
+      if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        yield put({ type: actionTypes.FETCHED_DATA, payload: recievedResponse });
+        callback(responseTypes.FAILURE, INVALID_COUPON_AMOUNT);
+        return;
+      }
+
       postUrl = APIService.WORKSHOP_SERVICE + requestURLS.APPLY_COUPON;
       const responseJson = yield fetch(postUrl, {
         headers,
         method: "POST",
         body: JSON.stringify({
           coupon_code: CouponJson.coupon_code,
-          amount: parseFloat(CouponJson.amount),
+          amount: parsedAmount,
         }),
       }).then((response: Response) => {
         recievedResponse = response as ReceivedResponse;
@@ -333,6 +365,10 @@ export function* applyCoupon(action: MyAction): Generator<any, void, any> {
         yield put({
           type: actionTypes.BALANCE_CHANGED,
           payload: { availableCredit: responseJson.credit },
+        });
+        yield put({
+          type: actionTypes.COUPON_APPLIED_TRACKED,
+          payload: { couponCode },
         });
         callback(responseTypes.SUCCESS, COUPON_APPLIED);
       } else {

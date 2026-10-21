@@ -22,7 +22,6 @@ from urllib.parse import unquote
 from django.template.loader import get_template
 from xhtml2pdf import pisa
 from django.utils import timezone
-from django.views.decorators.csrf import csrf_exempt
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.response import Response
@@ -51,7 +50,6 @@ class SignUpView(APIView):
     Used to add a new mechanic
     """
 
-    @csrf_exempt
     def post(self, request):
         """
         creates a new Mechanic in the db
@@ -394,18 +392,19 @@ class DownloadReportView(APIView):
 
         filename_from_user = unquote(filename_from_user)
         full_path = os.path.abspath(os.path.join(settings.BASE_DIR, "reports",  filename_from_user))
-        if os.path.exists(full_path) and os.path.isfile(full_path):
-            return FileResponse(open(full_path, 'rb'))
-        elif not os.path.exists(full_path):
+        try:
+            f = open(full_path, 'rb')
+        except FileNotFoundError:
             return Response(
                 {"message": f"File not found at '{full_path}'."},
                 status=status.HTTP_404_NOT_FOUND
             )
-        else:
+        except (IsADirectoryError, PermissionError):
             return Response(
                 {"message": f"'{full_path}' is not a file."},
                 status=status.HTTP_403_FORBIDDEN
             )
+        return FileResponse(f)
 
 def validate_filename(input: str) -> bool:
     """

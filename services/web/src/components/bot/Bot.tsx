@@ -496,10 +496,16 @@ What would you like to do next?`);
     },
   };
 
-  // Initialize component
+  // Sync chatbot state when auth/session changes to prevent stale session usage (CWE-384)
   useEffect(() => {
     console.log("ChatBot component initialized");
-  }, [props.accessToken, props.isLoggedIn]);
+    setChatbotState((prev) => ({
+      ...prev,
+      accessToken: props.accessToken,
+      isLoggedIn: props.isLoggedIn,
+      role: props.role,
+    }));
+  }, [props.accessToken, props.isLoggedIn, props.role]);
 
   return (
     <Row>

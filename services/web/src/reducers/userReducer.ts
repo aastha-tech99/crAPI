@@ -71,8 +71,9 @@ const userReducer = (
         ...state,
       };
     case actionTypes.LOGGED_IN:
+      // Reset to initialData first to ensure full session rotation (CWE-384)
       return {
-        ...state,
+        ...initialData,
         fetchingData: false,
         isLoggedIn: true,
         accessToken: maction.payload.token,
