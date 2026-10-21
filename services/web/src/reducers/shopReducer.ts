@@ -34,6 +34,7 @@ interface ShopState {
   prevOffset: string | null;
   nextOffset: string | null;
   order?: Order;
+  purchaseInProgress: boolean;
 }
 
 const initialData: ShopState = {
@@ -42,6 +43,7 @@ const initialData: ShopState = {
   pastOrders: [],
   prevOffset: null,
   nextOffset: null,
+  purchaseInProgress: false,
 };
 
 const shopReducer = (
@@ -83,6 +85,16 @@ const shopReducer = (
         pastOrders: state.pastOrders.map((order) =>
           order.id === maction.payload.orderId ? maction.payload.order : order,
         ),
+      };
+    case actionTypes.BUY_PRODUCT_STARTED:
+      return {
+        ...state,
+        purchaseInProgress: true,
+      };
+    case actionTypes.BUY_PRODUCT_FINISHED:
+      return {
+        ...state,
+        purchaseInProgress: false,
       };
     default:
       return state;

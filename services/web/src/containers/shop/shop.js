@@ -175,8 +175,9 @@ const ShopContainer = (props) => {
 
 const mapStateToProps = ({
   userReducer: { accessToken, prevOffset, nextOffset },
+  shopReducer: { purchaseInProgress },
 }) => {
-  return { accessToken, prevOffset, nextOffset };
+  return { accessToken, prevOffset, nextOffset, purchaseInProgress };
 };
 
 const mapDispatchToProps = {
@@ -197,6 +198,7 @@ ShopContainer.propTypes = {
   nextOffset: PropTypes.number,
   prevOffset: PropTypes.number,
   onOffsetChange: PropTypes.func,
+  purchaseInProgress: PropTypes.bool,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(ShopContainer);

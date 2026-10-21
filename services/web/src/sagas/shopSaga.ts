@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import { put, takeLatest } from "redux-saga/effects";
+import { put, select, takeLatest } from "redux-saga/effects";
 import { APIService, requestURLS } from "../constants/APIConstant";
 import MyAction from "../types/action";
 import actionTypes from "../constants/actionTypes";
@@ -121,8 +121,19 @@ export function* getProducts(action: MyAction): Generator<any, void, any> {
  */
 export function* buyProduct(action: MyAction): Generator<any, void, any> {
   const { accessToken, productId, callback } = action.payload;
+
+  // Prevent duplicate purchase submissions while a request is in flight
+  const purchaseInProgress: boolean = yield select(
+    (state: any) => state.shopReducer.purchaseInProgress,
+  );
+  if (purchaseInProgress) {
+    callback(responseTypes.FAILURE, PRODUCT_NOT_BOUGHT);
+    return;
+  }
+
   let recievedResponse: ReceivedResponse = {} as ReceivedResponse;
   try {
+    yield put({ type: actionTypes.BUY_PRODUCT_STARTED });
     yield put({ type: actionTypes.FETCHING_DATA });
     const postUrl = APIService.WORKSHOP_SERVICE + requestURLS.BUY_PRODUCT;
     const headers = {
@@ -139,6 +150,7 @@ export function* buyProduct(action: MyAction): Generator<any, void, any> {
     });
 
     yield put({ type: actionTypes.FETCHED_DATA, payload: recievedResponse });
+    yield put({ type: actionTypes.BUY_PRODUCT_FINISHED });
     if (recievedResponse.ok) {
       yield put({
         type: actionTypes.BALANCE_CHANGED,
@@ -150,6 +162,7 @@ export function* buyProduct(action: MyAction): Generator<any, void, any> {
     }
   } catch (e) {
     yield put({ type: actionTypes.FETCHED_DATA, payload: recievedResponse });
+    yield put({ type: actionTypes.BUY_PRODUCT_FINISHED });
     callback(responseTypes.FAILURE, PRODUCT_NOT_BOUGHT);
   }
 }

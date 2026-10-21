@@ -56,6 +56,7 @@ interface Product {
 interface ShopProps extends PropsFromRedux {
   products: Product[];
   availableCredit: number;
+  purchaseInProgress: boolean;
   isCouponFormOpen: boolean;
   setIsCouponFormOpen: (isOpen: boolean) => void;
   hasErrored: boolean;
@@ -90,7 +91,8 @@ const ProductAvatar: React.FC<{ image_url: string }> = ({ image_url }) => (
 const ProductDescription: React.FC<{
   product: Product;
   onBuyProduct: (product: Product) => void;
-}> = ({ product, onBuyProduct }) => (
+  purchaseInProgress: boolean;
+}> = ({ product, onBuyProduct, purchaseInProgress }) => (
   <div className="product-info">
     <div className="product-title">{product.name}</div>
     <div className="product-price">${Number(product.price).toFixed(2)}</div>
@@ -102,6 +104,8 @@ const ProductDescription: React.FC<{
       key="buy-product"
       className="buy-btn"
       onClick={() => onBuyProduct(product)}
+      disabled={purchaseInProgress}
+      loading={purchaseInProgress}
     >
       Buy
     </Button>
@@ -113,6 +117,7 @@ const Shop: React.FC<ShopProps> = (props) => {
   const {
     products,
     availableCredit,
+    purchaseInProgress,
     isCouponFormOpen,
     setIsCouponFormOpen,
     hasErrored,
@@ -194,6 +199,7 @@ const Shop: React.FC<ShopProps> = (props) => {
                     <ProductDescription
                       product={product}
                       onBuyProduct={onBuyProduct}
+                      purchaseInProgress={purchaseInProgress}
                     />
                   }
                 />
@@ -367,6 +373,7 @@ interface RootState {
     products: Product[];
     prevOffset: number | null;
     nextOffset: number | null;
+    purchaseInProgress: boolean;
   };
   userReducer: {
     role: string;
@@ -374,8 +381,14 @@ interface RootState {
 }
 
 const mapStateToProps = (state: RootState) => {
-  const { accessToken, availableCredit, products, prevOffset, nextOffset } =
-    state.shopReducer;
+  const {
+    accessToken,
+    availableCredit,
+    products,
+    prevOffset,
+    nextOffset,
+    purchaseInProgress,
+  } = state.shopReducer;
   const { role } = state.userReducer;
   return {
     accessToken,
@@ -383,6 +396,7 @@ const mapStateToProps = (state: RootState) => {
     products,
     prevOffset,
     nextOffset,
+    purchaseInProgress,
     role,
   };
 };
