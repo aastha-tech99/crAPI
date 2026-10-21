@@ -18,6 +18,9 @@ spec:
         release: {{ .Release.Name }}
         {{- toYaml .Values.web.podLabels | nindent 8 }}
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
       containers:
         - name: {{ .Values.web.name }}
           image: {{ .Values.web.image }}:{{ .Chart.AppVersion }}
