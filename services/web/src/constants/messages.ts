@@ -85,6 +85,7 @@ export const NO_ORDER: string = "Could not get order";
 export const ORDER_NOT_RETURNED: string = "Could not return order";
 export const INVALID_COUPON_CODE: string = "Invalid Coupon Code";
 export const COUPON_APPLIED: string = "Coupon applied";
+export const INVALID_COUPON_AMOUNT: string = "Invalid coupon amount";
 export const COUPON_NOT_APPLIED: string = "Could not validate coupon";
 export const COUPON_NOT_CREATED: string = "Could not create coupon";
 export const PRODUCT_NOT_ADDED: string = "Could not add product";
