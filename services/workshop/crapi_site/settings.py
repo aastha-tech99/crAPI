@@ -103,6 +103,9 @@ CORS_ORIGIN_ALLOW_ALL = True
 # Clickjacking protection: DENY framing (complements CSP frame-ancestors 'none')
 X_FRAME_OPTIONS = "DENY"
 
+# Prevent MIME type sniffing; SecurityMiddleware sends X-Content-Type-Options: nosniff
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
 ROOT_URLCONF = "crapi_site.urls"
 
 TEST_RUNNER = "xmlrunner.extra.djangotestrunner.XMLTestRunner"
