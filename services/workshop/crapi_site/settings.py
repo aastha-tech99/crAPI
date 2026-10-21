@@ -106,6 +106,14 @@ X_FRAME_OPTIONS = "DENY"
 # Prevent MIME type sniffing; SecurityMiddleware sends X-Content-Type-Options: nosniff
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
+# HTTP Strict Transport Security (HSTS): force browsers to use HTTPS for 1 year
+SECURE_HSTS_SECONDS = 31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+
+# Redirect all HTTP requests to HTTPS when TLS is enabled in the deployment
+SECURE_SSL_REDIRECT = os.environ.get("TLS_ENABLED", "").lower() in ("true", "1", "yes")
+
 ROOT_URLCONF = "crapi_site.urls"
 
 TEST_RUNNER = "xmlrunner.extra.djangotestrunner.XMLTestRunner"
