@@ -9,12 +9,17 @@ import (
 	"math/rand"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/bradfitz/iter"
 	"github.com/dustin/go-humanize"
 	"github.com/jaswdr/faker"
 )
+
+// processedTransactions tracks transaction IDs that have already been processed
+// to prevent duplicate payment processing (idempotency).
+var processedTransactions sync.Map
 
 type VINOwner struct {
 	VIN              string `json:"vin"`
@@ -125,6 +130,18 @@ func GetPayMentInfo(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Bad Request. Invalid Body %s\n", err.Error())
 		return
 	}
+
+	// Idempotency check: reject duplicate transaction processing.
+	txnID := p_req.Order.TransactionId
+	if txnID == "" {
+		http.Error(w, "Bad Request. transaction_id is required.", 400)
+		return
+	}
+	if _, alreadyProcessed := processedTransactions.LoadOrStore(txnID, true); alreadyProcessed {
+		http.Error(w, fmt.Sprintf("Conflict. Transaction %s has already been processed.", txnID), http.StatusConflict)
+		return
+	}
+
 	h := fnv.New32a()
 	h.Write([]byte(p_req.User.Phone))
 	seed := int64(h.Sum32())
