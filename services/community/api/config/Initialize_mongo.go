@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -30,7 +31,11 @@ func (server *Server) InitializeMongo(DbDriver, DbUser string, DbPassword string
 		// Set client options
 		var err error
 
-		DBURL := fmt.Sprintf("mongodb://%s:%s@%s:%s", DbUser, DbPassword, DbHost, DbPort)
+		// Prefer MONGO_URI env var; fall back to constructing from individual params
+		DBURL := os.Getenv("MONGO_URI")
+		if DBURL == "" {
+			DBURL = fmt.Sprintf("mongodb://%s:%s@%s:%s", DbUser, DbPassword, DbHost, DbPort)
+		}
 		clientOptions := options.Client().ApplyURI(DBURL)
 
 		server.Client, err = mongo.Connect(context.TODO(), clientOptions)
