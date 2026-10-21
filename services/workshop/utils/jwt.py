@@ -62,6 +62,7 @@ def jwt_auth_required(func):
                         token,
                         settings.SECRET_KEY,
                         algorithms=["HS256"],
+                        options={"verify_signature": True},
                     )
                     username = decoded["sub"]
                     user = User.objects.get(email=username)
