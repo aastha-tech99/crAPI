@@ -27,6 +27,7 @@ import {
   INVALID_COUPON_CODE,
   COUPON_APPLIED,
   COUPON_NOT_APPLIED,
+  COUPON_ALREADY_APPLIED,
   INVALID_COUPON_AMOUNT,
   COUPON_NOT_CREATED,
   NEW_PRODUCT_ADDED,
@@ -307,6 +308,16 @@ export function* returnOrder(action: MyAction): Generator<any, void, any> {
  */
 export function* applyCoupon(action: MyAction): Generator<any, void, any> {
   const { accessToken, couponCode, callback } = action.payload;
+
+  // Client-side usage limit: prevent re-applying the same coupon code
+  const appliedCoupons: string[] = yield select(
+    (state: any) => state.shopReducer.appliedCoupons,
+  );
+  if (appliedCoupons.includes(couponCode)) {
+    callback(responseTypes.FAILURE, COUPON_ALREADY_APPLIED);
+    return;
+  }
+
   let recievedResponse: ReceivedResponse = {} as ReceivedResponse;
   try {
     yield put({ type: actionTypes.FETCHING_DATA });
@@ -354,6 +365,10 @@ export function* applyCoupon(action: MyAction): Generator<any, void, any> {
         yield put({
           type: actionTypes.BALANCE_CHANGED,
           payload: { availableCredit: responseJson.credit },
+        });
+        yield put({
+          type: actionTypes.COUPON_APPLIED_TRACKED,
+          payload: { couponCode },
         });
         callback(responseTypes.SUCCESS, COUPON_APPLIED);
       } else {
