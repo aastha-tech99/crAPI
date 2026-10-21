@@ -33,6 +33,9 @@ export const authInterceptor: Middleware = (api) => (next) => (action) => {
     // Check if the status is 401 (Unauthorized)
     if (fetchedDataAction.payload.status === 401) {
       console.log("invalidSessionAction");
+      // Clear all client-side storage on session invalidation (CWE-384)
+      localStorage.clear();
+      sessionStorage.clear();
       next(invalidSessionAction());
     }
   }

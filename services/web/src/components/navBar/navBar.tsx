@@ -62,7 +62,9 @@ const Navbar: React.FC<NavbarProps> = (props) => {
   const logout = () => {
     logOutUser({
       callback: () => {
+        // Clear all client-side storage to ensure full session rotation (CWE-384)
         localStorage.clear();
+        sessionStorage.clear();
       },
     });
   };

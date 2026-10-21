@@ -368,7 +368,6 @@ const Shop: React.FC<ShopProps> = (props) => {
 
 interface RootState {
   shopReducer: {
-    accessToken: string;
     availableCredit: number;
     products: Product[];
     prevOffset: number | null;
@@ -376,20 +375,21 @@ interface RootState {
     purchaseInProgress: boolean;
   };
   userReducer: {
+    accessToken: string;
     role: string;
   };
 }
 
 const mapStateToProps = (state: RootState) => {
   const {
-    accessToken,
     availableCredit,
     products,
     prevOffset,
     nextOffset,
     purchaseInProgress,
   } = state.shopReducer;
-  const { role } = state.userReducer;
+  // Read accessToken from userReducer to ensure it reflects rotated session (CWE-384)
+  const { accessToken, role } = state.userReducer;
   return {
     accessToken,
     availableCredit,
