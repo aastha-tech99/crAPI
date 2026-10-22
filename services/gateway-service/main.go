@@ -1,12 +1,12 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/binary"
 	"encoding/json"
 	"flag"
 	"fmt"
-	"hash/fnv"
 	"log"
-	"math/rand"
 	"net/http"
 	"strings"
 	"time"
@@ -15,6 +15,21 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/jaswdr/faker"
 )
+
+// cryptoSource implements the rand.Source interface using crypto/rand,
+// providing cryptographically secure random numbers for the faker library.
+type cryptoSource struct{}
+
+func (s cryptoSource) Int63() int64 {
+	var b [8]byte
+	_, err := rand.Read(b[:])
+	if err != nil {
+		panic("crypto/rand is unavailable: " + err.Error())
+	}
+	return int64(binary.BigEndian.Uint64(b[:]) & 0x7fffffffffffffff)
+}
+
+func (s cryptoSource) Seed(_ int64) {}
 
 type VINOwner struct {
 	VIN              string `json:"vin"`
@@ -78,12 +93,9 @@ func GetOwners(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "vin param is required", http.StatusBadRequest)
 		return
 	}
-	h := fnv.New32a()
-	h.Write([]byte(vin))
-	seed := int64(h.Sum32())
-	src := rand.NewSource(seed)
+	src := cryptoSource{}
 	fake := faker.NewWithSeed(src)
-	fmt.Printf("Vehicle: %+v : Seed %d\n", vin, seed)
+	fmt.Printf("Vehicle: %+v\n", vin)
 	w.Header().Set("Content-Type", "application/json")
 	owners := []VINOwner{}
 	ftime := fake.Time()
@@ -124,10 +136,7 @@ func GetPayMentInfo(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Bad Request. Invalid Body %s\n", err.Error())
 		return
 	}
-	h := fnv.New32a()
-	h.Write([]byte(p_req.User.Phone))
-	seed := int64(h.Sum32())
-	src := rand.NewSource(seed)
+	src := cryptoSource{}
 	fake := faker.NewWithSeed(src)
 	payment_res := PaymentInfoResponse{}
 	payment_res.TransactionId = p_req.Order.TransactionId
