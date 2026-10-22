@@ -19,6 +19,10 @@ spec:
         - name: chromadb
           image: chromadb/chroma:latest
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            readOnlyRootFilesystem: false
           ports:
             - containerPort: 8000
           envFrom:

@@ -18,6 +18,10 @@ spec:
           image: postgres:14
           args: ["-c", "max_connections=500"]
           imagePullPolicy: "IfNotPresent"
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            readOnlyRootFilesystem: false
           ports:
             - containerPort: 5432
           envFrom:

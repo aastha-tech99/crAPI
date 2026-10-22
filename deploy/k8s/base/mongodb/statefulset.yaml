@@ -17,6 +17,10 @@ spec:
         - name: mongodb
           image: mongo:4.4
           imagePullPolicy: "IfNotPresent"
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            readOnlyRootFilesystem: false
           envFrom:
             - configMapRef:
                 name: mongodb-config

@@ -31,6 +31,10 @@ spec:
               name: jwt-key-secret
               readOnly: true
           imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            readOnlyRootFilesystem: false
           ports:
           - containerPort: 8080
           envFrom:

@@ -16,6 +16,10 @@ spec:
       - name: gateway-service
         image: crapi/gateway-service:latest
         imagePullPolicy: Always
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          readOnlyRootFilesystem: false
         ports:
         - containerPort: 8087
         resources:

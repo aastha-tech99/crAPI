@@ -35,6 +35,10 @@ spec:
       - name: crapi-community
         image: crapi/crapi-community:latest
         imagePullPolicy: Always
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          readOnlyRootFilesystem: false
         ports:
         - containerPort: 8087
         envFrom:

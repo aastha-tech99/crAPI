@@ -16,6 +16,10 @@ spec:
       - name: crapi-web
         image: crapi/crapi-web:latest
         imagePullPolicy: Always
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          readOnlyRootFilesystem: false
         ports:
         - containerPort: 80
         resources:
