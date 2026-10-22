@@ -26,9 +26,9 @@ func JSON(w http.ResponseWriter, statusCode int, data interface{}) {
 	w.WriteHeader(statusCode)
 	err := json.NewEncoder(w).Encode(data)
 	if err != nil {
-		errBody, _ := json.Marshal(map[string]string{"error": err.Error()})
-		if _, writeErr := w.Write(errBody); writeErr != nil {
-			log.Println("Error writing error response:", writeErr)
+		encodeErr := json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		if encodeErr != nil {
+			log.Println("Error writing error response:", encodeErr)
 		}
 	}
 }
