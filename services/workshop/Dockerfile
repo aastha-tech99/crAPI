@@ -45,4 +45,7 @@ COPY ./certs /app/certs
 COPY health.sh /app/health.sh
 ARG SERVER_PORT
 EXPOSE ${SERVER_PORT}
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup && \
+    chown -R appuser:appgroup /app
+USER appuser
 CMD ["/app/runner.sh"]

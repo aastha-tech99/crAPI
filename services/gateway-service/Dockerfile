@@ -30,5 +30,8 @@ COPY --from=builder /app/private.key /app/server.key
 
 EXPOSE 443
 
+RUN useradd -r -s /bin/false appuser && \
+    chown -R appuser /app
+USER appuser
 CMD ["/app/server"]
 

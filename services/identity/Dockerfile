@@ -44,4 +44,8 @@ ENV JAVA_TOOL_OPTIONS="-Xmx128m"
 COPY jwks.json /app/default_jwks.json
 COPY entrypoint.sh /entrypoint.sh
 COPY health.sh /app/health.sh
+RUN useradd -r -s /bin/false appuser && \
+    chown -R appuser /app && \
+    chown appuser /entrypoint.sh
+USER appuser
 CMD [ "/entrypoint.sh"]

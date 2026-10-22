@@ -44,4 +44,11 @@ RUN echo "daemon off;" >> /usr/local/openresty/nginx/conf/nginx.conf
 EXPOSE 80
 EXPOSE 443
 
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup && \
+    chown -R appuser:appgroup /app /usr/share/nginx/html \
+    /usr/local/openresty/nginx/logs /etc/nginx/conf.d && \
+    mkdir -p /var/run/openresty && \
+    chown -R appuser:appgroup /var/run/openresty && \
+    chown appuser:appgroup /usr/local/openresty/nginx/conf/nginx.conf
+USER appuser
 CMD [ "/etc/nginx/nginx-wrapper.sh" ]

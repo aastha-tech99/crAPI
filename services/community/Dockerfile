@@ -43,4 +43,7 @@ ARG SERVER_PORT
 EXPOSE ${SERVER_PORT}
 # Expose profiling port
 EXPOSE 6060
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup && \
+    chown -R appuser:appgroup /app
+USER appuser
 CMD /app/main
