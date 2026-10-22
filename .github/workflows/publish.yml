@@ -29,14 +29,14 @@ jobs:
       PLATFORMS: "linux/amd64,linux/arm64"
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
 
       - name: Env seen prerun
         run: env
 
       - name: Get branch name
         id: branch-name
-        uses: tj-actions/branch-names@v8
+        uses: tj-actions/branch-names@dde14ac574a8b9b1cedc59a1cf312788af43d8d8  # v8
         with:
           strip_tag_prefix: 'v'
 
@@ -73,19 +73,19 @@ jobs:
       # setup Docker build action
       - name: Set up Docker Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f  # v3
       - name: Set up QEMU
         id: qemu
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130  # v3
 
       - name: Login to DockerHub
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9  # v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build crapi-identity all platforms and push to Docker Hub
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@1104d471370f9806843c095c1db02b5a90c5f8b6  # v3
         with:
           context: ./services/identity
           tags: crapi/crapi-identity:${{ env.TAG_LATEST }},crapi/crapi-identity:${{ env.TAG_NAME }}
@@ -95,7 +95,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=identity-service
 
       - name: Build crapi-workshop all platforms and push to Docker Hub
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@1104d471370f9806843c095c1db02b5a90c5f8b6  # v3
         with:
           context: ./services/workshop
           tags: crapi/crapi-workshop:${{ env.TAG_LATEST }},crapi/crapi-workshop:${{ env.TAG_NAME }}
@@ -105,7 +105,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=workshop-service
 
       - name: Build crapi-chatbot all platforms and push to Docker Hub
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@1104d471370f9806843c095c1db02b5a90c5f8b6  # v3
         with:
             context: ./services/chatbot
             tags: crapi/crapi-chatbot:${{ env.TAG_LATEST }},crapi/crapi-chatbot:${{ env.TAG_NAME }}
@@ -115,7 +115,7 @@ jobs:
             cache-to: type=gha,mode=max,scope=chatbot-service
 
       - name: Build crapi-community all platforms and push to Docker Hub
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@1104d471370f9806843c095c1db02b5a90c5f8b6  # v3
         with:
           context: ./services/community
           tags: crapi/crapi-community:${{ env.TAG_LATEST }},crapi/crapi-community:${{ env.TAG_NAME }}
@@ -125,7 +125,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=community-service
 
       - name: Build crapi-web all platforms and push to Docker Hub
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@1104d471370f9806843c095c1db02b5a90c5f8b6  # v3
         with:
           context: ./services/web
           tags: crapi/crapi-web:${{ env.TAG_LATEST }},crapi/crapi-web:${{ env.TAG_NAME }}
@@ -135,7 +135,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=web-service
 
       - name: Build gateway-service all platforms and push to Docker Hub
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@1104d471370f9806843c095c1db02b5a90c5f8b6  # v3
         with:
           context: ./services/gateway-service
           tags: crapi/gateway-service:${{ env.TAG_LATEST }},crapi/gateway-service:${{ env.TAG_NAME }}
@@ -145,7 +145,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=gateway-service
 
       - name: Build mailhog all platforms and push to Docker Hub
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@1104d471370f9806843c095c1db02b5a90c5f8b6  # v3
         with:
           context: ./services/mailhog
           tags: crapi/mailhog:${{ env.TAG_LATEST }},crapi/mailhog:${{ env.TAG_NAME }}
