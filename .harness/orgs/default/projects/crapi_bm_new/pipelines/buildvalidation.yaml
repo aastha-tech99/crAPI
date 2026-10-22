@@ -1,13 +1,14 @@
 pipeline:
   name: buildvalidation
   identifier: buildvalidation
+  description: crAPI build validation with spotless, E2E smoke, unit tests and golangci-lint
   tags: {}
   projectIdentifier: crapi_bm_new
   orgIdentifier: default
   properties:
     ci:
       codebase:
-        connectorRef: crapi_benchmark2
+        connectorRef: crapiBM_git
         build: <+input>
         sparseCheckout: []
   stages:
