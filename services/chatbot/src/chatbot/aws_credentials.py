@@ -205,16 +205,16 @@ def get_aws_credentials() -> dict:
     """
     region = os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION")
     _role_arn_set = bool(Config.AWS_ASSUME_ROLE_ARN)
-    _static_ak_set = bool(os.getenv("AWS_ACCESS_KEY_ID"))
-    _static_sk_set = bool(os.getenv("AWS_SECRET_ACCESS_KEY"))
+    _s1_set = bool(os.getenv("AWS_ACCESS_KEY_ID"))
+    _s2_set = bool(os.getenv("AWS_SECRET_ACCESS_KEY"))
     _bearer_set = bool(Config.AWS_BEARER_TOKEN_BEDROCK)
     logger.info(
         "[AWS_CREDS] get_aws_credentials called - region: %s, role_arn_set: %s, "
-        "static_ak_set: %s, static_sk_set: %s, bearer_cfg: %s",
+        "s1_set: %s, s2_set: %s, bearer_cfg: %s",
         region,
         _role_arn_set,
-        _static_ak_set,
-        _static_sk_set,
+        _s1_set,
+        _s2_set,
         _bearer_set,
     )
 
