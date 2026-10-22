@@ -15,6 +15,7 @@ Contains all the methods related to jwt token
 """
 import requests
 import jwt
+from jwt import PyJWKClient
 from functools import wraps
 from rest_framework import status
 from rest_framework.response import Response
@@ -27,6 +28,16 @@ import logging
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 logger = logging.getLogger()
+
+_jwks_client = None
+
+
+def _get_jwks_client():
+    """Return a cached PyJWKClient that fetches the identity service JWKS."""
+    global _jwks_client
+    if _jwks_client is None:
+        _jwks_client = PyJWKClient(settings.IDENTITY_JWKS)
+    return _jwks_client
 
 
 def jwt_auth_required(func):
@@ -58,7 +69,13 @@ def jwt_auth_required(func):
                 )
                 response_status_code = token_verify_response.status_code
                 if response_status_code == status.HTTP_200_OK:
-                    decoded = jwt.decode(token, options={"verify_signature": False})
+                    jwks_client = _get_jwks_client()
+                    signing_key = jwks_client.get_signing_key_from_jwt(token)
+                    decoded = jwt.decode(
+                        token,
+                        signing_key.key,
+                        algorithms=["RS256"],
+                    )
                     username = decoded["sub"]
                     user = User.objects.get(email=username)
                     # Add user object to the view function if authorized
@@ -77,7 +94,8 @@ def jwt_auth_required(func):
                 content_type="application/json",
             )
 
-        except (jwt.exceptions.DecodeError, User.DoesNotExist) as e:
+        except (jwt.exceptions.DecodeError, jwt.exceptions.InvalidTokenError,
+                User.DoesNotExist) as e:
             logger.debug(
                 f"JWT token verification failed with exception: {e}", exc_info=True
             )
