@@ -23,10 +23,10 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.classic.HttpClient;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustAllStrategy;
 import org.apache.http.conn.ssl.TrustStrategy;
@@ -75,7 +75,7 @@ public class VehicleOwnershipServiceImpl implements VehicleOwnershipService {
             sslContext,
             new String[] {"TLSv1.2", "TLSv1.3"},
             null,
-            NoopHostnameVerifier.INSTANCE);
+            HttpsURLConnection.getDefaultHostnameVerifier());
     CloseableHttpClient httpClient =
         HttpClients.custom().setSSLSocketFactory(csf).setSSLContext(sslContext).build();
     builder =
