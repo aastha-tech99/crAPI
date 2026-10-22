@@ -64,19 +64,20 @@ def _build_llm(api_key, model_name):
 
     if provider == "openai":
         kwargs = {"api_key": api_key, "model": model_name}
+        _has_creds = bool(api_key)
         if Config.OPENAI_BASE_URL:
             kwargs["base_url"] = Config.OPENAI_BASE_URL
             logger.info(
-                "OpenAI Config - model: %s, base_url: %s, has_api_key: %s",
+                "OpenAI Config - model: %s, base_url: %s, has_credentials: %s",
                 model_name,
                 Config.OPENAI_BASE_URL,
-                bool(api_key),
+                _has_creds,
             )
         else:
             logger.info(
-                "OpenAI Config - model: %s, base_url: (default), has_api_key: %s",
+                "OpenAI Config - model: %s, base_url: (default), has_credentials: %s",
                 model_name,
-                bool(api_key),
+                _has_creds,
             )
         return ChatOpenAI(**kwargs)
     if provider == "azure_openai":
@@ -112,13 +113,15 @@ def _build_llm(api_key, model_name):
 
         try:
             bedrock_kwargs = get_bedrock_credentials_kwargs()
+            _bedrock_keys = list(bedrock_kwargs.keys())
+            _has_explicit = bool(bedrock_kwargs.get("aws_access_key_id"))
             logger.info(
                 "[BUILD_LLM] Got Bedrock kwargs - keys: %s, has_explicit_creds: %s",
-                list(bedrock_kwargs.keys()),
-                bool(bedrock_kwargs.get("aws_access_key_id")),
+                _bedrock_keys,
+                _has_explicit,
             )
         except Exception as e:
-            logger.error("[BUILD_LLM] Failed to get Bedrock credentials: %s", str(e))
+            logger.error("[BUILD_LLM] Failed to get Bedrock credentials: %s", type(e).__name__)
             raise
 
         try:
@@ -147,29 +150,33 @@ def _build_llm(api_key, model_name):
             location=Config.VERTEX_LOCATION or None,
         )
     if provider == "anthropic":
+        _has_anthro_key = bool(api_key)
         logger.info(
-            "Anthropic Config - model: %s, has_api_key: %s", model_name, bool(api_key)
+            "Anthropic Config - model: %s, has_credentials: %s", model_name, _has_anthro_key
         )
         return ChatAnthropic(api_key=api_key, model=model_name)
     if provider == "groq":
+        _has_groq_key = bool(Config.GROQ_API_KEY)
         logger.info(
-            "Groq Config - model: %s, has_api_key: %s",
+            "Groq Config - model: %s, has_credentials: %s",
             model_name,
-            bool(Config.GROQ_API_KEY),
+            _has_groq_key,
         )
         return ChatGroq(api_key=Config.GROQ_API_KEY, model=model_name)
     if provider == "mistral":
+        _has_mistral_key = bool(Config.MISTRAL_API_KEY)
         logger.info(
-            "Mistral Config - model: %s, has_api_key: %s",
+            "Mistral Config - model: %s, has_credentials: %s",
             model_name,
-            bool(Config.MISTRAL_API_KEY),
+            _has_mistral_key,
         )
         return ChatMistralAI(api_key=Config.MISTRAL_API_KEY, model=model_name)
     if provider == "cohere":
+        _has_cohere_key = bool(Config.COHERE_API_KEY)
         logger.info(
-            "Cohere Config - model: %s, has_api_key: %s",
+            "Cohere Config - model: %s, has_credentials: %s",
             model_name,
-            bool(Config.COHERE_API_KEY),
+            _has_cohere_key,
         )
         return ChatCohere(api_key=Config.COHERE_API_KEY, model=model_name)
     logger.error("Unsupported LLM provider: %s", provider)
@@ -177,11 +184,13 @@ def _build_llm(api_key, model_name):
 
 
 async def build_langgraph_agent(api_key, model_name, user_jwt):
+    _has_key = bool(api_key)
+    _has_jwt = bool(user_jwt)
     logger.info(
-        "Building LangGraph agent - has_api_key: %s, model_name: %s, has_user_jwt: %s",
-        bool(api_key),
+        "Building LangGraph agent - has_credentials: %s, model_name: %s, has_user_jwt: %s",
+        _has_key,
         model_name or "(will use default)",
-        bool(user_jwt),
+        _has_jwt,
     )
     system_prompt = textwrap.dedent(
         """

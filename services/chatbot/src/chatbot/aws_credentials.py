@@ -61,10 +61,12 @@ def _get_base_session():
     # Log the credential source boto3 is using
     creds = session.get_credentials()
     if creds:
+        _cred_method = creds.method if hasattr(creds, "method") else "unknown"
+        _has_key = bool(creds.access_key) if creds else False
         logger.info(
-            "[BASE_SESSION] Session created - credential_method: %s, access_key_prefix: %s",
-            creds.method if hasattr(creds, "method") else "unknown",
-            creds.access_key[:8] + "..." if creds and creds.access_key else "(none)",
+            "[BASE_SESSION] Session created - credential_method: %s, has_access_key: %s",
+            _cred_method,
+            _has_key,
         )
     else:
         logger.warning("[BASE_SESSION] Session created but NO credentials found!")
@@ -126,16 +128,17 @@ def _assume_role() -> dict:
         response = sts_client.assume_role(**assume_role_kwargs)
         credentials = response["Credentials"]
 
+        _expiration = credentials["Expiration"]
+        _assumed_role_id = response.get("AssumedRoleUser", {}).get("AssumedRoleId", "unknown")
+        _has_ak = bool(credentials.get("AccessKeyId"))
         logger.info(
             "[ASSUME_ROLE] SUCCESS - role_arn: %s, session_name: %s, expires_at: %s, "
-            "assumed_role_id: %s, access_key_prefix: %s",
+            "assumed_role_id: %s, has_access_key: %s",
             role_arn,
             session_name,
-            credentials["Expiration"],
-            response.get("AssumedRoleUser", {}).get("AssumedRoleId", "unknown"),
-            credentials["AccessKeyId"][:8] + "..."
-            if credentials.get("AccessKeyId")
-            else "(none)",
+            _expiration,
+            _assumed_role_id,
+            _has_ak,
         )
 
         return {
@@ -184,8 +187,9 @@ def _set_cached_credentials(credentials: dict) -> None:
     with _credentials_cache["lock"]:
         _credentials_cache["credentials"] = credentials
         _credentials_cache["expiration"] = credentials["expiry_time"]
+        _expiry = credentials["expiry_time"]
         logger.debug(
-            "Cached new credentials - expires_at: %s", credentials["expiry_time"]
+            "Cached new credentials - expires_at: %s", _expiry
         )
 
 
@@ -200,14 +204,18 @@ def get_aws_credentials() -> dict:
         RuntimeError: If no credentials are available.
     """
     region = os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION")
+    _has_role_arn = bool(Config.AWS_ASSUME_ROLE_ARN)
+    _has_static_ak = bool(os.getenv("AWS_ACCESS_KEY_ID"))
+    _has_static_sk = bool(os.getenv("AWS_SECRET_ACCESS_KEY"))
+    _has_bearer = bool(Config.AWS_BEARER_TOKEN_BEDROCK)
     logger.info(
-        "[AWS_CREDS] get_aws_credentials called - region: %s, AWS_ASSUME_ROLE_ARN: %s, "
+        "[AWS_CREDS] get_aws_credentials called - region: %s, has_assume_role_arn: %s, "
         "has_static_access_key: %s, has_static_secret_key: %s, has_bearer_token: %s",
         region,
-        Config.AWS_ASSUME_ROLE_ARN or "(not set)",
-        bool(os.getenv("AWS_ACCESS_KEY_ID")),
-        bool(os.getenv("AWS_SECRET_ACCESS_KEY")),
-        bool(Config.AWS_BEARER_TOKEN_BEDROCK),
+        _has_role_arn,
+        _has_static_ak,
+        _has_static_sk,
+        _has_bearer,
     )
 
     # If assume role is configured, use it
@@ -218,11 +226,10 @@ def get_aws_credentials() -> dict:
         # Try to use cached credentials
         cached = _get_cached_credentials()
         if cached:
+            _cached_has_key = bool(cached.get("access_key"))
             logger.info(
-                "[AWS_CREDS] Using CACHED assume role credentials - access_key_prefix: %s",
-                cached["access_key"][:8] + "..."
-                if cached.get("access_key")
-                else "(none)",
+                "[AWS_CREDS] Using CACHED assume role credentials - has_access_key: %s",
+                _cached_has_key,
             )
             return {
                 "access_key": cached["access_key"],
@@ -235,11 +242,10 @@ def get_aws_credentials() -> dict:
         logger.info("[AWS_CREDS] No cached credentials, will call assume role now")
         credentials = _assume_role()
         _set_cached_credentials(credentials)
+        _assumed_has_key = bool(credentials.get("access_key"))
         logger.info(
-            "[AWS_CREDS] Assume role succeeded - access_key_prefix: %s",
-            credentials["access_key"][:8] + "..."
-            if credentials.get("access_key")
-            else "(none)",
+            "[AWS_CREDS] Assume role succeeded - has_access_key: %s",
+            _assumed_has_key,
         )
         return {
             "access_key": credentials["access_key"],
@@ -254,10 +260,12 @@ def get_aws_credentials() -> dict:
     session_token = os.getenv("AWS_SESSION_TOKEN")
 
     if access_key and secret_key:
+        _has_ak_static = bool(access_key)
+        _has_st = bool(session_token)
         logger.info(
-            "[AWS_CREDS] Using STATIC credentials from env - access_key_prefix: %s, has_session_token: %s",
-            access_key[:8] + "..." if access_key else "(none)",
-            bool(session_token),
+            "[AWS_CREDS] Using STATIC credentials from env - has_access_key: %s, has_session_token: %s",
+            _has_ak_static,
+            _has_st,
         )
         result = {
             "access_key": access_key,
@@ -308,12 +316,12 @@ def get_bedrock_client():
         or os.getenv("AWS_DEFAULT_REGION")
     )
 
+    _has_ak = bool(credentials.get("access_key"))
+    _has_tok = bool(credentials.get("token"))
     logger.info(
-        "[BEDROCK_CLIENT] Using credentials - access_key_prefix: %s, has_token: %s, region: %s",
-        credentials["access_key"][:8] + "..."
-        if credentials.get("access_key")
-        else "(none)",
-        bool(credentials.get("token")),
+        "[BEDROCK_CLIENT] Using credentials - has_access_key: %s, has_token: %s, region: %s",
+        _has_ak,
+        _has_tok,
         region,
     )
 
@@ -350,9 +358,8 @@ def get_bedrock_credentials_kwargs() -> dict:
         credentials = get_aws_credentials()
     except Exception as e:
         logger.error(
-            "[BEDROCK_KWARGS] Failed to get credentials: %s - %s",
+            "[BEDROCK_KWARGS] Failed to get credentials: %s",
             type(e).__name__,
-            str(e),
         )
         raise
 
@@ -374,12 +381,12 @@ def get_bedrock_credentials_kwargs() -> dict:
     if credentials.get("token"):
         kwargs["aws_session_token"] = credentials["token"]
 
+    _kwargs_has_ak = bool(credentials.get("access_key"))
+    _kwargs_has_tok = bool(credentials.get("token"))
     logger.info(
-        "[BEDROCK_KWARGS] Using explicit credentials - access_key_prefix: %s, has_token: %s, region: %s",
-        credentials["access_key"][:8] + "..."
-        if credentials.get("access_key")
-        else "(none)",
-        bool(credentials.get("token")),
+        "[BEDROCK_KWARGS] Using explicit credentials - has_access_key: %s, has_token: %s, region: %s",
+        _kwargs_has_ak,
+        _kwargs_has_tok,
         region,
     )
 
