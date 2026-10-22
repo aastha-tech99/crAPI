@@ -107,8 +107,6 @@ pipeline:
                         apt-get update -qq
                       fi
                       DEBIAN_FRONTEND=noninteractive apt-get install -y -qq python3.11 python3.11-venv python3.11-dev
-                      python3.11 -m ensurepip --upgrade 2>/dev/null || true
-                      python3.11 -m pip install -q --break-system-packages --upgrade pip setuptools wheel
                       curl -fsSL https://go.dev/dl/go1.23.0.linux-amd64.tar.gz | tar -C /usr/local -xz
                       export PATH="/usr/local/go/bin:$PATH"
 
@@ -189,25 +187,28 @@ pipeline:
 
                       echo "==> Build + start workshop (Django)"
                       cd "$WORKSPACE/services/workshop"
-                      python3.11 -m pip install -q --break-system-packages -r requirements.txt gunicorn
+                      python3.11 -m venv /tmp/workshop-venv
+                      /tmp/workshop-venv/bin/pip install -q --upgrade pip setuptools wheel
+                      /tmp/workshop-venv/bin/pip install -q -r requirements.txt gunicorn
+                      PY=/tmp/workshop-venv/bin/python
                       DB_HOST="$PG_HOST" DB_PORT=5432 DB_USER=admin DB_PASSWORD=crapisecretpassword DB_NAME=crapi \
                       IDENTITY_SERVICE="127.0.0.1:${IDENTITY_PORT}" SECRET_KEY=crapi SERVER_PORT="$WORKSHOP_PORT" TLS_ENABLED=false \
                       MONGO_DB_HOST="$MG_HOST" MONGO_DB_PORT=27017 MONGO_DB_USER=admin \
                       MONGO_DB_PASSWORD=crapisecretpassword MONGO_DB_NAME=crapi \
                       API_GATEWAY_URL=https://api.mypremiumdealership.com \
-                        python3.11 manage.py migrate --no-input
+                        $PY manage.py migrate --no-input
                       DB_HOST="$PG_HOST" DB_PORT=5432 DB_USER=admin DB_PASSWORD=crapisecretpassword DB_NAME=crapi \
                       IDENTITY_SERVICE="127.0.0.1:${IDENTITY_PORT}" SECRET_KEY=crapi SERVER_PORT="$WORKSHOP_PORT" TLS_ENABLED=false \
                       MONGO_DB_HOST="$MG_HOST" MONGO_DB_PORT=27017 MONGO_DB_USER=admin \
                       MONGO_DB_PASSWORD=crapisecretpassword MONGO_DB_NAME=crapi \
                       API_GATEWAY_URL=https://api.mypremiumdealership.com \
-                        python3.11 manage.py seed_database
+                        $PY manage.py seed_database
                       DB_HOST="$PG_HOST" DB_PORT=5432 DB_USER=admin DB_PASSWORD=crapisecretpassword DB_NAME=crapi \
                       IDENTITY_SERVICE="127.0.0.1:${IDENTITY_PORT}" SECRET_KEY=crapi SERVER_PORT="$WORKSHOP_PORT" TLS_ENABLED=false \
                       MONGO_DB_HOST="$MG_HOST" MONGO_DB_PORT=27017 MONGO_DB_USER=admin \
                       MONGO_DB_PASSWORD=crapisecretpassword MONGO_DB_NAME=crapi \
                       API_GATEWAY_URL=https://api.mypremiumdealership.com \
-                        python3.11 -m gunicorn --workers=2 --threads=4 --worker-class=gthread \
+                        $PY -m gunicorn --workers=2 --threads=4 --worker-class=gthread \
                           --bind "0.0.0.0:${WORKSHOP_PORT}" --log-level=info crapi_site.wsgi &
                       WORKSHOP_PID=$!
 
@@ -274,8 +275,6 @@ pipeline:
                         apt-get update -qq
                       fi
                       DEBIAN_FRONTEND=noninteractive apt-get install -y -qq python3.11 python3.11-venv python3.11-dev
-                      python3.11 -m ensurepip --upgrade 2>/dev/null || true
-                      python3.11 -m pip install -q --break-system-packages --upgrade pip setuptools wheel
                       curl -fsSL https://go.dev/dl/go1.23.0.linux-amd64.tar.gz | tar -C /usr/local -xz
                       export PATH="/usr/local/go/bin:$PATH"
 
@@ -327,14 +326,16 @@ pipeline:
 
                       echo "==> Workshop unit tests"
                       cd "$WORKSPACE/services/workshop"
-                      python3.11 -m pip install -q --break-system-packages -r requirements.txt
-                      test ! -f dev-requirements.txt || python3.11 -m pip install -q --break-system-packages -r dev-requirements.txt
+                      python3.11 -m venv /tmp/workshop-venv
+                      /tmp/workshop-venv/bin/pip install -q --upgrade pip setuptools wheel
+                      /tmp/workshop-venv/bin/pip install -q -r requirements.txt
+                      test ! -f dev-requirements.txt || /tmp/workshop-venv/bin/pip install -q -r dev-requirements.txt
                       DB_HOST="$PG_HOST" DB_PORT=5432 DB_USER=admin DB_PASSWORD=crapisecretpassword DB_NAME=crapi \
                       IDENTITY_SERVICE="127.0.0.1:8080" SECRET_KEY=crapi SERVER_PORT=8000 TLS_ENABLED=false \
                       MONGO_DB_HOST="$MG_HOST" MONGO_DB_PORT=27017 MONGO_DB_USER=admin \
                       MONGO_DB_PASSWORD=crapisecretpassword MONGO_DB_NAME=crapi \
                       API_GATEWAY_URL=https://api.mypremiumdealership.com IS_TESTING=True \
-                        python3.11 manage.py test --no-input
+                        /tmp/workshop-venv/bin/python manage.py test --no-input
 
                       echo "==> All unit tests PASSED"
                     resources:
