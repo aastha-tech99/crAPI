@@ -39,14 +39,14 @@ public class SMTPMailServer {
    */
   public void sendMail(String sendMail, String body, String subject) {
     // Sanitize inputs to prevent SMTP header injection via CRLF characters
-    subject = subject != null ? subject.replaceAll("[\\r\\n]", "") : subject;
-    sendMail = sendMail != null ? sendMail.replaceAll("[\\r\\n]", "") : sendMail;
+    String safeSubject = subject != null ? subject.replaceAll("[\\r\\n]", "") : "";
+    String safeSendMail = sendMail != null ? sendMail.replaceAll("[\\r\\n]", "") : sendMail;
     String mhogDomain = mailhogConfiguration.getDomain();
     Session session = mailhogConfiguration.sendmail();
     boolean useMailHog = false;
     try {
-      log.info("sendMail  mhogDomain: {}, emails: {}", mhogDomain, sendMail);
-      InternetAddress[] emails = InternetAddress.parse(sendMail);
+      log.info("sendMail  mhogDomain: {}, emails: {}", mhogDomain, safeSendMail);
+      InternetAddress[] emails = InternetAddress.parse(safeSendMail);
       if (mhogDomain != null && !mhogDomain.isEmpty()) {
         if (mailConfiguration.getHost().trim().endsWith(mhogDomain)) {
           log.info(
@@ -65,15 +65,15 @@ public class SMTPMailServer {
       }
       if (!useMailHog) {
         session = mailConfiguration.sendmail();
-        log.info("Using Mail Configuration for sending email: " + sendMail);
+        log.info("Using Mail Configuration for sending email: " + safeSendMail);
       }
 
       Message msg = new MimeMessage(session);
 
       msg.setFrom(new InternetAddress(mailhogConfiguration.getFrom(), false));
 
-      msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(sendMail));
-      msg.setSubject(subject);
+      msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(safeSendMail));
+      msg.setSubject(safeSubject);
       msg.setContent(body, "text/html");
       msg.setSentDate(new Date());
 
