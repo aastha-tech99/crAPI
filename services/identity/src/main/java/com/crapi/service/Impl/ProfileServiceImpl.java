@@ -31,7 +31,10 @@ import com.crapi.utils.ProfileValidator;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -237,11 +240,20 @@ public class ProfileServiceImpl implements ProfileService {
               && enable_shell_injection
               && optionalProfileVideo.get().getConversion_params() != null) {
             profileVideo = optionalProfileVideo.get();
-            String conversionCommand =
-                String.format(
-                    "convertVideo -i %s %s",
-                    profileVideo.getVideo_name(), profileVideo.getConversion_params());
-            return new CRAPIResponse(conversionShell.executeBashCommand(conversionCommand), 200);
+            String videoName = profileVideo.getVideo_name();
+            String conversionParams = profileVideo.getConversion_params();
+            // Validate inputs: reject shell metacharacters to prevent command injection
+            Pattern safePattern = Pattern.compile("^[a-zA-Z0-9_.\\-/ ]+$");
+            if (videoName == null
+                || conversionParams == null
+                || !safePattern.matcher(videoName).matches()
+                || !safePattern.matcher(conversionParams).matches()) {
+              return new CRAPIResponse(UserMessage.CONVERT_VIDEO_INTERNAL_ERROR, 500);
+            }
+            // Use argument list (no shell) to prevent OS command injection
+            List<String> conversionCommand =
+                Arrays.asList("convertVideo", "-i", videoName, conversionParams);
+            return new CRAPIResponse(conversionShell.executeCommand(conversionCommand), 200);
           }
           return new CRAPIResponse(UserMessage.CONVERT_VIDEO_INTERNAL_ERROR, 500);
         }

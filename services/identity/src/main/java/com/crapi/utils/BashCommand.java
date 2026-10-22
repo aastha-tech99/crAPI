@@ -17,31 +17,27 @@ package com.crapi.utils;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class BashCommand {
 
   /**
-   * Execute a bash command. We can handle complex bash commands including multiple executions (; |
-   * && ||), quotes, expansions ($), escapes (\), e.g.: "cd /abc/def; mv ghi 'older ghi '$(whoami)"
+   * Execute a command using ProcessBuilder with an argument list. Each argument is passed directly
+   * without shell interpretation, preventing OS command injection.
    *
-   * @param command
-   * @return true if bash got started, but your command may have failed.
+   * @param command the command and its arguments as a list
+   * @return the command output, or null on failure
    */
-  public String executeBashCommand(String command) throws IOException {
+  public String executeCommand(List<String> command) throws IOException {
     BufferedReader b = null;
     StringBuilder output;
-    log.info("Executing BASH command:\n   ", command);
-    Runtime r = Runtime.getRuntime();
-    // Use bash -c so we can handle things like multi commands separated by ; and
-    // things like quotes, $, |, and \. My tests show that command comes as
-    // one argument to bash, so we do not need to quote it to make it one thing.
-    // Also, exec may object if it does not have an executable file as the first thing,
-    // so having bash here makes it happy provided bash is installed and in path.
-    String[] commands = {"bash", "-c", command};
+    log.info("Executing command: {}", command);
+    ProcessBuilder pb = new ProcessBuilder(command);
+    pb.redirectErrorStream(true);
     try {
-      Process p = r.exec(commands);
+      Process p = pb.start();
 
       p.waitFor();
       InputStreamReader data = new InputStreamReader(p.getInputStream());
@@ -54,10 +50,12 @@ public class BashCommand {
       b.close();
       return (output != null ? String.valueOf(output) : "command not found");
     } catch (Exception e) {
-      log.error("Failed to execute bash with command: " + command);
+      log.error("Failed to execute command: {}", command);
       e.printStackTrace();
     } finally {
-      b.close();
+      if (b != null) {
+        b.close();
+      }
     }
     return null;
   }
