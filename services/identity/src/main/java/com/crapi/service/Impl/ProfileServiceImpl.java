@@ -31,8 +31,6 @@ import com.crapi.utils.ProfileValidator;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
@@ -250,10 +248,9 @@ public class ProfileServiceImpl implements ProfileService {
                 || !safePattern.matcher(conversionParams).matches()) {
               return new CRAPIResponse(UserMessage.CONVERT_VIDEO_INTERNAL_ERROR, 500);
             }
-            // Use argument list (no shell) to prevent OS command injection
-            List<String> conversionCommand =
-                Arrays.asList("convertVideo", "-i", videoName, conversionParams);
-            return new CRAPIResponse(conversionShell.executeCommand(conversionCommand), 200);
+            // Delegate to hardcoded-executable method to prevent OS command injection
+            return new CRAPIResponse(
+                conversionShell.executeConvertVideo(videoName, conversionParams), 200);
           }
           return new CRAPIResponse(UserMessage.CONVERT_VIDEO_INTERNAL_ERROR, 500);
         }
