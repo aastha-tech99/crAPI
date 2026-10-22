@@ -251,6 +251,8 @@ IDENTITY_LOGIN = "http://{}/identity/api/auth/login".format(
 IDENTITY_HEALTH = "http://{}/identity/health_check".format(
     get_env_value("IDENTITY_SERVICE")
 )
+VERIFY_SSL = os.environ.get("VERIFY_SSL", "true").lower() != "false"
+
 TLS_ENABLED = os.environ.get("TLS_ENABLED")
 if TLS_ENABLED and (TLS_ENABLED.lower() in ["true", "1", "yes"]):
     IDENTITY_VERIFY = "https://{}/identity/api/auth/verify".format(
