@@ -44,7 +44,11 @@ const ChangeEmail: React.FC = () => {
 
   const handleEmailChange = (newEmail: string): void => setEmail(newEmail);
 
-  const CurrentComponent = steps[currentStep].component;
+  const validStep =
+    Number.isInteger(currentStep) && currentStep >= 0 && currentStep < steps.length
+      ? currentStep
+      : 0;
+  const CurrentComponent = steps[validStep].component;
 
   return (
     <div className="container">
