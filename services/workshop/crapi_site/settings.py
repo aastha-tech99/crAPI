@@ -263,6 +263,7 @@ IDENTITY_JWKS = "http://{}/identity/api/auth/jwks.json".format(
     get_env_value("IDENTITY_SERVICE")
 )
 VERIFY_SSL = os.environ.get("VERIFY_SSL", "true").lower() != "false"
+REQUEST_TIMEOUT = int(os.environ.get("REQUEST_TIMEOUT", 30))
 
 TLS_ENABLED = os.environ.get("TLS_ENABLED")
 if TLS_ENABLED and (TLS_ENABLED.lower() in ["true", "1", "yes"]):
