@@ -19,6 +19,7 @@ import os
 import bcrypt
 import re
 from urllib.parse import unquote
+from django.template import Context
 from django.template.loader import get_template
 from xhtml2pdf import pisa
 from django.utils import timezone
@@ -422,7 +423,8 @@ def service_report_pdf(response_data, report_id):
     report_filepath = os.path.join(reports_dir, f"report_{report_id}")
 
     template = get_template('service_report.html')
-    html_string = template.render({'service': response_data})
+    context = Context({'service': response_data}, autoescape=True)
+    html_string = template.render(context)
     with open(report_filepath, "w+b") as pdf_file:
         pisa.CreatePDF(src=html_string, dest=pdf_file)
 
