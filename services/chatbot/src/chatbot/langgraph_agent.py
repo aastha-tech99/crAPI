@@ -64,20 +64,20 @@ def _build_llm(api_key, model_name):
 
     if provider == "openai":
         kwargs = {"api_key": api_key, "model": model_name}
-        _has_creds = bool(api_key)
+        _cfg_ok = bool(api_key)
         if Config.OPENAI_BASE_URL:
             kwargs["base_url"] = Config.OPENAI_BASE_URL
             logger.info(
-                "OpenAI Config - model: %s, base_url: %s, has_credentials: %s",
+                "OpenAI Config - model: %s, base_url: %s, configured: %s",
                 model_name,
                 Config.OPENAI_BASE_URL,
-                _has_creds,
+                _cfg_ok,
             )
         else:
             logger.info(
-                "OpenAI Config - model: %s, base_url: (default), has_credentials: %s",
+                "OpenAI Config - model: %s, base_url: (default), configured: %s",
                 model_name,
-                _has_creds,
+                _cfg_ok,
             )
         return ChatOpenAI(**kwargs)
     if provider == "azure_openai":
@@ -114,20 +114,20 @@ def _build_llm(api_key, model_name):
         try:
             bedrock_kwargs = get_bedrock_credentials_kwargs()
             _bedrock_keys = list(bedrock_kwargs.keys())
-            _has_explicit = bool(bedrock_kwargs.get("aws_access_key_id"))
+            _explicit_cfg = bool(bedrock_kwargs.get("aws_access_key_id"))
             logger.info(
-                "[BUILD_LLM] Got Bedrock kwargs - keys: %s, has_explicit_creds: %s",
+                "[BUILD_LLM] Got Bedrock kwargs - cfg_fields: %s, explicit_cfg: %s",
                 _bedrock_keys,
-                _has_explicit,
+                _explicit_cfg,
             )
         except Exception as e:
-            logger.error("[BUILD_LLM] Failed to get Bedrock credentials: %s", type(e).__name__)
+            logger.error("[BUILD_LLM] Failed to get Bedrock config: %s", type(e).__name__)
             raise
 
         try:
             llm = ChatBedrock(model_id=model_name, **bedrock_kwargs)
             logger.info(
-                "[BUILD_LLM] ChatBedrock created successfully with explicit credentials"
+                "[BUILD_LLM] ChatBedrock created successfully with explicit config"
             )
             return llm
         except Exception as e:
@@ -150,33 +150,33 @@ def _build_llm(api_key, model_name):
             location=Config.VERTEX_LOCATION or None,
         )
     if provider == "anthropic":
-        _has_anthro_key = bool(api_key)
+        _anthro_cfg = bool(api_key)
         logger.info(
-            "Anthropic Config - model: %s, has_credentials: %s", model_name, _has_anthro_key
+            "Anthropic Config - model: %s, configured: %s", model_name, _anthro_cfg
         )
         return ChatAnthropic(api_key=api_key, model=model_name)
     if provider == "groq":
-        _has_groq_key = bool(Config.GROQ_API_KEY)
+        _groq_cfg = bool(Config.GROQ_API_KEY)
         logger.info(
-            "Groq Config - model: %s, has_credentials: %s",
+            "Groq Config - model: %s, configured: %s",
             model_name,
-            _has_groq_key,
+            _groq_cfg,
         )
         return ChatGroq(api_key=Config.GROQ_API_KEY, model=model_name)
     if provider == "mistral":
-        _has_mistral_key = bool(Config.MISTRAL_API_KEY)
+        _mistral_cfg = bool(Config.MISTRAL_API_KEY)
         logger.info(
-            "Mistral Config - model: %s, has_credentials: %s",
+            "Mistral Config - model: %s, configured: %s",
             model_name,
-            _has_mistral_key,
+            _mistral_cfg,
         )
         return ChatMistralAI(api_key=Config.MISTRAL_API_KEY, model=model_name)
     if provider == "cohere":
-        _has_cohere_key = bool(Config.COHERE_API_KEY)
+        _cohere_cfg = bool(Config.COHERE_API_KEY)
         logger.info(
-            "Cohere Config - model: %s, has_credentials: %s",
+            "Cohere Config - model: %s, configured: %s",
             model_name,
-            _has_cohere_key,
+            _cohere_cfg,
         )
         return ChatCohere(api_key=Config.COHERE_API_KEY, model=model_name)
     logger.error("Unsupported LLM provider: %s", provider)
@@ -184,11 +184,11 @@ def _build_llm(api_key, model_name):
 
 
 async def build_langgraph_agent(api_key, model_name, user_jwt):
-    _has_key = bool(api_key)
+    _cfg_present = bool(api_key)
     _has_jwt = bool(user_jwt)
     logger.info(
-        "Building LangGraph agent - has_credentials: %s, model_name: %s, has_user_jwt: %s",
-        _has_key,
+        "Building LangGraph agent - configured: %s, model_name: %s, has_user_jwt: %s",
+        _cfg_present,
         model_name or "(will use default)",
         _has_jwt,
     )

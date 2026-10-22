@@ -144,11 +144,11 @@ def get_embedding_function(api_key, provider: str, llm_model: str | None):
         )
         bedrock_kwargs = get_bedrock_credentials_kwargs()
         _bedrock_region = bedrock_kwargs.get("region_name", "(not set)")
-        _has_explicit_creds = bool(bedrock_kwargs.get("aws_access_key_id"))
+        _has_explicit_cfg = bool(bedrock_kwargs.get("aws_access_key_id"))
         logger.info(
-            "Bedrock Embeddings - region: %s, has_explicit_credentials: %s",
+            "Bedrock Embeddings - region: %s, explicit_cfg_set: %s",
             _bedrock_region,
-            _has_explicit_creds,
+            _has_explicit_cfg,
         )
         return BedrockEmbeddings(model_id=model_id, **bedrock_kwargs)
     if embeddings_provider == "vertex":

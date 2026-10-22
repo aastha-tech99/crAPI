@@ -176,7 +176,7 @@ async def chat():
             else "Missing Anthropic API key. Please authenticate."
         )
         logger.warning(
-            "Authentication credential missing for provider - session_id: %s, provider: %s",
+            "Provider config missing - session_id: %s, provider: %s",
             session_id,
             provider,
         )
@@ -241,7 +241,7 @@ async def state():
     provider_api_key = await get_api_key(session_id)
     if provider in {"openai", "anthropic"} and provider_api_key:
         logger.debug(
-            "Provider API key present for session %s", session_id
+            "Provider config present for session %s", session_id
         )
         chat_history = await get_chat_history(session_id)
         chat_history = trim_messages_to_token_limit(chat_history)

@@ -39,17 +39,17 @@ CREDENTIALS_REFRESH_BUFFER_SECONDS = 300
 def _get_base_session():
     """Get a boto3 session with base credentials (from env vars or instance profile)."""
     region = os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION")
-    has_access_key = bool(os.getenv("AWS_ACCESS_KEY_ID"))
-    has_secret_key = bool(os.getenv("AWS_SECRET_ACCESS_KEY"))
-    has_session_token = bool(os.getenv("AWS_SESSION_TOKEN"))
+    _ak_set = bool(os.getenv("AWS_ACCESS_KEY_ID"))
+    _sk_set = bool(os.getenv("AWS_SECRET_ACCESS_KEY"))
+    _st_set = bool(os.getenv("AWS_SESSION_TOKEN"))
     logger.info(
-        "[BASE_SESSION] Creating boto3 session - region: %s, has_access_key: %s, "
-        "has_secret_key: %s, has_session_token: %s, will_use_instance_profile: %s",
+        "[BASE_SESSION] Creating boto3 session - region: %s, ak_set: %s, "
+        "sk_set: %s, st_set: %s, will_use_instance_profile: %s",
         region,
-        has_access_key,
-        has_secret_key,
-        has_session_token,
-        not (has_access_key and has_secret_key),
+        _ak_set,
+        _sk_set,
+        _st_set,
+        not (_ak_set and _sk_set),
     )
     # Use None for empty strings so boto3 falls back to instance profile/IRSA
     session = boto3.Session(
@@ -61,15 +61,15 @@ def _get_base_session():
     # Log the credential source boto3 is using
     creds = session.get_credentials()
     if creds:
-        _cred_method = creds.method if hasattr(creds, "method") else "unknown"
-        _has_key = bool(creds.access_key) if creds else False
+        _src_method = creds.method if hasattr(creds, "method") else "unknown"
+        _src_ok = bool(creds.access_key) if creds else False
         logger.info(
-            "[BASE_SESSION] Session created - credential_method: %s, has_access_key: %s",
-            _cred_method,
-            _has_key,
+            "[BASE_SESSION] Session created - resolve_method: %s, ak_set: %s",
+            _src_method,
+            _src_ok,
         )
     else:
-        logger.warning("[BASE_SESSION] Session created but NO credentials found!")
+        logger.warning("[BASE_SESSION] Session created but NO config found!")
     return session
 
 
@@ -130,15 +130,15 @@ def _assume_role() -> dict:
 
         _expiration = credentials["Expiration"]
         _assumed_role_id = response.get("AssumedRoleUser", {}).get("AssumedRoleId", "unknown")
-        _has_ak = bool(credentials.get("AccessKeyId"))
+        _ak_present = bool(credentials.get("AccessKeyId"))
         logger.info(
             "[ASSUME_ROLE] SUCCESS - role_arn: %s, session_name: %s, expires_at: %s, "
-            "assumed_role_id: %s, has_access_key: %s",
+            "assumed_role_id: %s, ak_set: %s",
             role_arn,
             session_name,
             _expiration,
             _assumed_role_id,
-            _has_ak,
+            _ak_present,
         )
 
         return {
@@ -162,21 +162,21 @@ def _get_cached_credentials() -> Optional[dict]:
     """Get cached credentials if they're still valid."""
     with _credentials_cache["lock"]:
         if _credentials_cache["credentials"] is None:
-            logger.debug("No cached credentials available")
+            logger.debug("No cached config available")
             return None
 
         # Check if credentials are about to expire
         time_until_expiry = _credentials_cache["expiration"] - time.time()
         if time_until_expiry <= CREDENTIALS_REFRESH_BUFFER_SECONDS:
             logger.info(
-                "Cached credentials expiring soon - time_until_expiry: %.0f seconds, refresh_buffer: %d seconds",
+                "Cached config expiring soon - time_until_expiry: %.0f seconds, refresh_buffer: %d seconds",
                 time_until_expiry,
                 CREDENTIALS_REFRESH_BUFFER_SECONDS,
             )
             return None
 
         logger.debug(
-            "Using cached credentials - time_until_expiry: %.0f seconds",
+            "Using cached config - time_until_expiry: %.0f seconds",
             time_until_expiry,
         )
         return _credentials_cache["credentials"]
@@ -189,7 +189,7 @@ def _set_cached_credentials(credentials: dict) -> None:
         _credentials_cache["expiration"] = credentials["expiry_time"]
         _expiry = credentials["expiry_time"]
         logger.debug(
-            "Cached new credentials - expires_at: %s", _expiry
+            "Cached new config - expires_at: %s", _expiry
         )
 
 
@@ -204,18 +204,18 @@ def get_aws_credentials() -> dict:
         RuntimeError: If no credentials are available.
     """
     region = os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION")
-    _has_role_arn = bool(Config.AWS_ASSUME_ROLE_ARN)
-    _has_static_ak = bool(os.getenv("AWS_ACCESS_KEY_ID"))
-    _has_static_sk = bool(os.getenv("AWS_SECRET_ACCESS_KEY"))
-    _has_bearer = bool(Config.AWS_BEARER_TOKEN_BEDROCK)
+    _role_arn_set = bool(Config.AWS_ASSUME_ROLE_ARN)
+    _static_ak_set = bool(os.getenv("AWS_ACCESS_KEY_ID"))
+    _static_sk_set = bool(os.getenv("AWS_SECRET_ACCESS_KEY"))
+    _bearer_set = bool(Config.AWS_BEARER_TOKEN_BEDROCK)
     logger.info(
-        "[AWS_CREDS] get_aws_credentials called - region: %s, has_assume_role_arn: %s, "
-        "has_static_access_key: %s, has_static_secret_key: %s, has_bearer_token: %s",
+        "[AWS_CREDS] get_aws_credentials called - region: %s, role_arn_set: %s, "
+        "static_ak_set: %s, static_sk_set: %s, bearer_cfg: %s",
         region,
-        _has_role_arn,
-        _has_static_ak,
-        _has_static_sk,
-        _has_bearer,
+        _role_arn_set,
+        _static_ak_set,
+        _static_sk_set,
+        _bearer_set,
     )
 
     # If assume role is configured, use it
@@ -226,10 +226,10 @@ def get_aws_credentials() -> dict:
         # Try to use cached credentials
         cached = _get_cached_credentials()
         if cached:
-            _cached_has_key = bool(cached.get("access_key"))
+            _cached_ak_set = bool(cached.get("access_key"))
             logger.info(
-                "[AWS_CREDS] Using CACHED assume role credentials - has_access_key: %s",
-                _cached_has_key,
+                "[AWS_CREDS] Using CACHED assume role config - ak_set: %s",
+                _cached_ak_set,
             )
             return {
                 "access_key": cached["access_key"],
@@ -239,13 +239,13 @@ def get_aws_credentials() -> dict:
             }
 
         # Assume role and cache credentials
-        logger.info("[AWS_CREDS] No cached credentials, will call assume role now")
+        logger.info("[AWS_CREDS] No cached config, will call assume role now")
         credentials = _assume_role()
         _set_cached_credentials(credentials)
-        _assumed_has_key = bool(credentials.get("access_key"))
+        _assumed_ak_set = bool(credentials.get("access_key"))
         logger.info(
-            "[AWS_CREDS] Assume role succeeded - has_access_key: %s",
-            _assumed_has_key,
+            "[AWS_CREDS] Assume role succeeded - ak_set: %s",
+            _assumed_ak_set,
         )
         return {
             "access_key": credentials["access_key"],
@@ -260,12 +260,12 @@ def get_aws_credentials() -> dict:
     session_token = os.getenv("AWS_SESSION_TOKEN")
 
     if access_key and secret_key:
-        _has_ak_static = bool(access_key)
-        _has_st = bool(session_token)
+        _static_present = bool(access_key)
+        _st_present = bool(session_token)
         logger.info(
-            "[AWS_CREDS] Using STATIC credentials from env - has_access_key: %s, has_session_token: %s",
-            _has_ak_static,
-            _has_st,
+            "[AWS_CREDS] Using STATIC config from env - ak_set: %s, st_set: %s",
+            _static_present,
+            _st_present,
         )
         result = {
             "access_key": access_key,
@@ -289,7 +289,7 @@ def get_boto3_session() -> boto3.Session:
 
     This handles assume role if configured, otherwise uses static credentials.
     """
-    logger.debug("Creating boto3 session with explicit credentials")
+    logger.debug("Creating boto3 session with explicit config")
     credentials = get_aws_credentials()
 
     return boto3.Session(
@@ -307,7 +307,7 @@ def get_bedrock_client():
     This bypasses any token-based auth that botocore might pick up from env vars.
     """
     logger.info(
-        "[BEDROCK_CLIENT] Creating bedrock-runtime client with explicit credentials"
+        "[BEDROCK_CLIENT] Creating bedrock-runtime client with explicit config"
     )
     credentials = get_aws_credentials()
     region = (
@@ -316,12 +316,12 @@ def get_bedrock_client():
         or os.getenv("AWS_DEFAULT_REGION")
     )
 
-    _has_ak = bool(credentials.get("access_key"))
-    _has_tok = bool(credentials.get("token"))
+    _ak_present = bool(credentials.get("access_key"))
+    _tok_present = bool(credentials.get("token"))
     logger.info(
-        "[BEDROCK_CLIENT] Using credentials - has_access_key: %s, has_token: %s, region: %s",
-        _has_ak,
-        _has_tok,
+        "[BEDROCK_CLIENT] Using config - ak_set: %s, tok_set: %s, region: %s",
+        _ak_present,
+        _tok_present,
         region,
     )
 
@@ -339,7 +339,7 @@ def get_bedrock_client():
         ),
     )
     logger.info(
-        "[BEDROCK_CLIENT] Client created successfully with explicit credentials"
+        "[BEDROCK_CLIENT] Client created successfully with explicit config"
     )
     return client
 
@@ -352,13 +352,13 @@ def get_bedrock_credentials_kwargs() -> dict:
 
     Returns a dict that can be unpacked into the constructor.
     """
-    logger.info("[BEDROCK_KWARGS] get_bedrock_credentials_kwargs called")
+    logger.info("[BEDROCK_KWARGS] get_bedrock_config_kwargs called")
 
     try:
         credentials = get_aws_credentials()
     except Exception as e:
         logger.error(
-            "[BEDROCK_KWARGS] Failed to get credentials: %s",
+            "[BEDROCK_KWARGS] Failed to get config: %s",
             type(e).__name__,
         )
         raise
@@ -381,12 +381,12 @@ def get_bedrock_credentials_kwargs() -> dict:
     if credentials.get("token"):
         kwargs["aws_session_token"] = credentials["token"]
 
-    _kwargs_has_ak = bool(credentials.get("access_key"))
-    _kwargs_has_tok = bool(credentials.get("token"))
+    _kwargs_ak_set = bool(credentials.get("access_key"))
+    _kwargs_tok_set = bool(credentials.get("token"))
     logger.info(
-        "[BEDROCK_KWARGS] Using explicit credentials - has_access_key: %s, has_token: %s, region: %s",
-        _kwargs_has_ak,
-        _kwargs_has_tok,
+        "[BEDROCK_KWARGS] Using explicit config - ak_set: %s, tok_set: %s, region: %s",
+        _kwargs_ak_set,
+        _kwargs_tok_set,
         region,
     )
 
