@@ -38,6 +38,9 @@ public class SMTPMailServer {
    * @param subject send mail to given email with dynamic subject and body
    */
   public void sendMail(String sendMail, String body, String subject) {
+    // Sanitize inputs to prevent SMTP header injection via CRLF characters
+    subject = subject != null ? subject.replaceAll("[\\r\\n]", "") : subject;
+    sendMail = sendMail != null ? sendMail.replaceAll("[\\r\\n]", "") : sendMail;
     String mhogDomain = mailhogConfiguration.getDomain();
     Session session = mailhogConfiguration.sendmail();
     boolean useMailHog = false;
