@@ -239,18 +239,14 @@ public class ProfileServiceImpl implements ProfileService {
               && optionalProfileVideo.get().getConversion_params() != null) {
             profileVideo = optionalProfileVideo.get();
             String videoName = profileVideo.getVideo_name();
-            String conversionParams = profileVideo.getConversion_params();
-            // Validate inputs: reject shell metacharacters to prevent command injection
-            Pattern safePattern = Pattern.compile("^[a-zA-Z0-9_.\\-/ ]+$");
-            if (videoName == null
-                || conversionParams == null
-                || !safePattern.matcher(videoName).matches()
-                || !safePattern.matcher(conversionParams).matches()) {
+            // Validate video name: reject shell metacharacters to prevent command injection
+            Pattern safePattern = Pattern.compile("^[a-zA-Z0-9_.\\-]+$");
+            if (videoName == null || !safePattern.matcher(videoName).matches()) {
               return new CRAPIResponse(UserMessage.CONVERT_VIDEO_INTERNAL_ERROR, 500);
             }
-            // Delegate to hardcoded-executable method to prevent OS command injection
+            // Delegate to hardcoded-executable method with hardcoded conversion params
             return new CRAPIResponse(
-                conversionShell.executeConvertVideo(videoName, conversionParams), 200);
+                conversionShell.executeConvertVideo(videoName), 200);
           }
           return new CRAPIResponse(UserMessage.CONVERT_VIDEO_INTERNAL_ERROR, 500);
         }

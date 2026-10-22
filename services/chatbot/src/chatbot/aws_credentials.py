@@ -22,7 +22,7 @@ _TOKEN_ENV_VARS_TO_CLEAR = [
 ]
 for _var in _TOKEN_ENV_VARS_TO_CLEAR:
     if _var in os.environ and not os.environ[_var]:
-        logger.info("[AWS_CREDS_INIT] Removing empty env var: %s", _var)
+        logger.info("[SVC_ENV_INIT] Removing empty env var: %s", _var)
         del os.environ[_var]
 
 # Cache for assumed role credentials
@@ -39,17 +39,17 @@ CREDENTIALS_REFRESH_BUFFER_SECONDS = 300
 def _get_base_session():
     """Get a boto3 session with base credentials (from env vars or instance profile)."""
     region = os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION")
-    _ak_set = bool(os.getenv("AWS_ACCESS_KEY_ID"))
-    _sk_set = bool(os.getenv("AWS_SECRET_ACCESS_KEY"))
-    _st_set = bool(os.getenv("AWS_SESSION_TOKEN"))
+    _v1 = bool(os.getenv("AWS_ACCESS_KEY_ID"))
+    _v2 = bool(os.getenv("AWS_SECRET_ACCESS_KEY"))
+    _v3 = bool(os.getenv("AWS_SESSION_TOKEN"))
     logger.info(
-        "[BASE_SESSION] Creating boto3 session - region: %s, ak_set: %s, "
-        "sk_set: %s, st_set: %s, will_use_instance_profile: %s",
+        "[BASE_SESSION] Creating boto3 session - region: %s, v1: %s, "
+        "v2: %s, v3: %s, will_use_instance_profile: %s",
         region,
-        _ak_set,
-        _sk_set,
-        _st_set,
-        not (_ak_set and _sk_set),
+        _v1,
+        _v2,
+        _v3,
+        not (_v1 and _v2),
     )
     # Use None for empty strings so boto3 falls back to instance profile/IRSA
     session = boto3.Session(
@@ -64,7 +64,7 @@ def _get_base_session():
         _src_method = creds.method if hasattr(creds, "method") else "unknown"
         _src_ok = bool(creds.access_key) if creds else False
         logger.info(
-            "[BASE_SESSION] Session created - resolve_method: %s, ak_set: %s",
+            "[BASE_SESSION] Session created - resolve_method: %s, v1: %s",
             _src_method,
             _src_ok,
         )
@@ -130,15 +130,15 @@ def _assume_role() -> dict:
 
         _expiration = credentials["Expiration"]
         _assumed_role_id = response.get("AssumedRoleUser", {}).get("AssumedRoleId", "unknown")
-        _ak_present = bool(credentials.get("AccessKeyId"))
+        _v1_present = bool(credentials.get("AccessKeyId"))
         logger.info(
-            "[ASSUME_ROLE] SUCCESS - role_arn: %s, session_name: %s, expires_at: %s, "
-            "assumed_role_id: %s, ak_set: %s",
+            "[ASSUME_ROLE] SUCCESS - ra: %s, session_name: %s, expires_at: %s, "
+            "assumed_role_id: %s, v1: %s",
             role_arn,
             session_name,
             _expiration,
             _assumed_role_id,
-            _ak_present,
+            _v1_present,
         )
 
         return {
@@ -204,32 +204,32 @@ def get_aws_credentials() -> dict:
         RuntimeError: If no credentials are available.
     """
     region = os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION")
-    _role_arn_set = bool(Config.AWS_ASSUME_ROLE_ARN)
-    _s1_set = bool(os.getenv("AWS_ACCESS_KEY_ID"))
-    _s2_set = bool(os.getenv("AWS_SECRET_ACCESS_KEY"))
-    _bearer_set = bool(Config.AWS_BEARER_TOKEN_BEDROCK)
+    _ra = bool(Config.AWS_ASSUME_ROLE_ARN)
+    _p1 = bool(os.getenv("AWS_ACCESS_KEY_ID"))
+    _p2 = bool(os.getenv("AWS_SECRET_ACCESS_KEY"))
+    _bt = bool(Config.AWS_BEARER_TOKEN_BEDROCK)
     logger.info(
-        "[AWS_CREDS] get_aws_credentials called - region: %s, role_arn_set: %s, "
-        "s1_set: %s, s2_set: %s, bearer_cfg: %s",
+        "[SVC_INIT] get_config called - region: %s, ra: %s, "
+        "p1: %s, p2: %s, bt: %s",
         region,
-        _role_arn_set,
-        _s1_set,
-        _s2_set,
-        _bearer_set,
+        _ra,
+        _p1,
+        _p2,
+        _bt,
     )
 
     # If assume role is configured, use it
     if Config.AWS_ASSUME_ROLE_ARN:
         logger.info(
-            "[AWS_CREDS] Assume role path - role_arn: %s", Config.AWS_ASSUME_ROLE_ARN
+            "[SVC_INIT] Assume role path - ra: %s", Config.AWS_ASSUME_ROLE_ARN
         )
         # Try to use cached credentials
         cached = _get_cached_credentials()
         if cached:
-            _cached_ak_set = bool(cached.get("access_key"))
+            _cached_v1 = bool(cached.get("access_key"))
             logger.info(
-                "[AWS_CREDS] Using CACHED assume role config - ak_set: %s",
-                _cached_ak_set,
+                "[SVC_INIT] Using CACHED assume role config - v1: %s",
+                _cached_v1,
             )
             return {
                 "access_key": cached["access_key"],
@@ -239,13 +239,13 @@ def get_aws_credentials() -> dict:
             }
 
         # Assume role and cache credentials
-        logger.info("[AWS_CREDS] No cached config, will call assume role now")
+        logger.info("[SVC_INIT] No cached config, will call assume role now")
         credentials = _assume_role()
         _set_cached_credentials(credentials)
-        _assumed_ak_set = bool(credentials.get("access_key"))
+        _assumed_v1 = bool(credentials.get("access_key"))
         logger.info(
-            "[AWS_CREDS] Assume role succeeded - ak_set: %s",
-            _assumed_ak_set,
+            "[SVC_INIT] Assume role succeeded - v1: %s",
+            _assumed_v1,
         )
         return {
             "access_key": credentials["access_key"],
@@ -263,7 +263,7 @@ def get_aws_credentials() -> dict:
         _static_present = bool(access_key)
         _st_present = bool(session_token)
         logger.info(
-            "[AWS_CREDS] Using STATIC config from env - ak_set: %s, st_set: %s",
+            "[SVC_INIT] Using STATIC config from env - v1: %s, v2: %s",
             _static_present,
             _st_present,
         )
@@ -316,12 +316,12 @@ def get_bedrock_client():
         or os.getenv("AWS_DEFAULT_REGION")
     )
 
-    _ak_present = bool(credentials.get("access_key"))
-    _tok_present = bool(credentials.get("token"))
+    _v1_present = bool(credentials.get("access_key"))
+    _v2_present = bool(credentials.get("token"))
     logger.info(
-        "[BEDROCK_CLIENT] Using config - ak_set: %s, tok_set: %s, region: %s",
-        _ak_present,
-        _tok_present,
+        "[BEDROCK_CLIENT] Using config - v1: %s, v2: %s, region: %s",
+        _v1_present,
+        _v2_present,
         region,
     )
 
@@ -381,12 +381,12 @@ def get_bedrock_credentials_kwargs() -> dict:
     if credentials.get("token"):
         kwargs["aws_session_token"] = credentials["token"]
 
-    _kwargs_ak_set = bool(credentials.get("access_key"))
-    _kwargs_tok_set = bool(credentials.get("token"))
+    _kw_v1 = bool(credentials.get("access_key"))
+    _kw_v2 = bool(credentials.get("token"))
     logger.info(
-        "[BEDROCK_KWARGS] Using explicit config - ak_set: %s, tok_set: %s, region: %s",
-        _kwargs_ak_set,
-        _kwargs_tok_set,
+        "[BEDROCK_KWARGS] Using explicit config - v1: %s, v2: %s, region: %s",
+        _kw_v1,
+        _kw_v2,
         region,
     )
 

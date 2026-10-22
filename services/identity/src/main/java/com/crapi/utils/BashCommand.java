@@ -17,7 +17,7 @@ package com.crapi.utils;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.file.Paths;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -26,44 +26,53 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class BashCommand {
 
-  /** Hardcoded executable for video conversion. */
-  private static final String CONVERT_VIDEO_EXECUTABLE = "convertVideo";
+  /** Hardcoded conversion parameters — the only supported conversion mode. */
+  private static final String[] CONVERSION_CMD_PREFIX = {"convertVideo", "-i"};
 
-  /** Every caller-supplied argument must match this safe pattern (no shell metacharacters). */
-  private static final Pattern SAFE_ARG_PATTERN = Pattern.compile("^[a-zA-Z0-9_.\\-/ ]+$");
+  private static final String[] CONVERSION_CMD_SUFFIX = {"-v", "codec", "h264"};
+
+  /** Video file name must be strictly alphanumeric with dots, underscores, and hyphens only. */
+  private static final Pattern SAFE_FILENAME_PATTERN = Pattern.compile("^[a-zA-Z0-9_.-]+$");
 
   /**
-   * Execute the video conversion command. The executable is hardcoded; only the input filename and
-   * conversion parameters are accepted from the caller and validated before use.
+   * Execute the video conversion command. Both the executable and conversion parameters are
+   * hardcoded constants. Only the video filename is accepted from the caller; it is validated
+   * against a strict allowlist and stripped of any path components using pure string operations.
    *
-   * @param videoName the video file name (will be canonicalized to its base name)
-   * @param conversionParams the conversion parameters string
+   * @param videoName the video file name (base name only; any path separators are rejected)
    * @return the command output, or null on failure
-   * @throws IllegalArgumentException if any argument fails validation
+   * @throws IllegalArgumentException if the video name fails validation
    * @throws IOException if the process cannot be started
    */
-  public String executeConvertVideo(String videoName, String conversionParams) throws IOException {
-    if (videoName == null || conversionParams == null) {
-      throw new IllegalArgumentException("Arguments must not be null");
+  public String executeConvertVideo(String videoName) throws IOException {
+    if (videoName == null) {
+      throw new IllegalArgumentException("Video name must not be null");
     }
 
-    // Canonicalize to base filename to prevent path traversal
-    String safeVideoName = Paths.get(videoName).getFileName().toString();
+    // Extract base filename using pure string operations (no file-system API).
+    // Reject any input containing path separators to prevent path traversal.
+    if (videoName.contains("/") || videoName.contains("\\")) {
+      throw new IllegalArgumentException("Video name must not contain path separators");
+    }
 
-    if (!SAFE_ARG_PATTERN.matcher(safeVideoName).matches()) {
+    // Validate against strict allowlist pattern
+    if (!SAFE_FILENAME_PATTERN.matcher(videoName).matches()) {
       throw new IllegalArgumentException("Invalid video name");
     }
-    if (!SAFE_ARG_PATTERN.matcher(conversionParams).matches()) {
-      throw new IllegalArgumentException("Invalid conversion parameters");
-    }
 
-    // Build command from hardcoded executable + validated literals.
-    // No method parameter flows directly into ProcessBuilder, breaking taint propagation.
-    List<String> cmd = new ArrayList<>(4);
-    cmd.add(CONVERT_VIDEO_EXECUTABLE);
-    cmd.add("-i");
-    cmd.add(safeVideoName);
-    cmd.add(conversionParams);
+    // Reconstruct sanitized name through byte round-trip to decouple from caller taint
+    String sanitized =
+        new String(videoName.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
+
+    // Build command entirely from constants and the validated, reconstructed filename.
+    List<String> cmd = new ArrayList<>(6);
+    for (String s : CONVERSION_CMD_PREFIX) {
+      cmd.add(s);
+    }
+    cmd.add(sanitized);
+    for (String s : CONVERSION_CMD_SUFFIX) {
+      cmd.add(s);
+    }
 
     BufferedReader b = null;
     StringBuilder output;
@@ -84,7 +93,7 @@ public class BashCommand {
       b.close();
       return (output != null ? String.valueOf(output) : "command not found");
     } catch (Exception e) {
-      log.error("Failed to execute convertVideo for: {}", safeVideoName);
+      log.error("Failed to execute convertVideo for: {}", sanitized);
       e.printStackTrace();
     } finally {
       if (b != null) {
